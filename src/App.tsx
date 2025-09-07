@@ -10,6 +10,11 @@ import Auth from "./pages/Auth";
 import Photographers from "./pages/Photographers";
 import PhotographerProfile from "./pages/PhotographerProfile";
 import Services from "./pages/Services";
+import BookService from "./pages/BookService";
+import Bookings from "./pages/Bookings";
+import Messages from "./pages/Messages";
+import Shop from "./pages/Shop";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +56,11 @@ const App = () => (
               <Route path="photographers" element={<Photographers />} />
               <Route path="photographers/:userId" element={<PhotographerProfile />} />
               <Route path="services" element={<Services />} />
+              <Route path="book/:photographerId/:serviceId" element={<BookService />} />
+              <Route path="bookings" element={<Bookings />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="shop" element={<Shop />} />
+              <Route path="profile" element={<Profile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
             <Route path="*" element={<NotFound />} />
