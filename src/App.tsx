@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PublicLayout } from "@/components/layout/PublicLayout";
+import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Photographers from "./pages/Photographers";
@@ -46,23 +48,40 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<PublicLayout />}>
+              <Route index element={<Home />} />
+              <Route path="photographers" element={<Photographers />} />
+              <Route path="photographers/:userId" element={<PhotographerProfile />} />
+              <Route path="services" element={<Services />} />
+              <Route path="shop" element={<Shop />} />
+            </Route>
+            
+            {/* Auth Route */}
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
               <ProtectedRoute>
                 <AppLayout />
               </ProtectedRoute>
             }>
               <Route index element={<Index />} />
-              <Route path="photographers" element={<Photographers />} />
-              <Route path="photographers/:userId" element={<PhotographerProfile />} />
-              <Route path="services" element={<Services />} />
               <Route path="book/:photographerId/:serviceId" element={<BookService />} />
               <Route path="bookings" element={<Bookings />} />
               <Route path="messages" element={<Messages />} />
-              <Route path="shop" element={<Shop />} />
               <Route path="profile" element={<Profile />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             </Route>
+            
+            {/* Protected booking route */}
+            <Route path="/book/:photographerId/:serviceId" element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<BookService />} />
+            </Route>
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
