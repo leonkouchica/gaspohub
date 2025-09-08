@@ -56,7 +56,7 @@ const Home = () => {
       .eq('is_approved', true)
       .limit(6);
 
-    if (photographerData) {
+    if (photographerData && photographerData.length > 0) {
       const photographersWithCount = await Promise.all(
         photographerData.map(async (photographer) => {
           const { data: profileData } = await supabase
@@ -86,6 +86,86 @@ const Home = () => {
         })
       );
       setFeaturedPhotographers(photographersWithCount);
+    } else {
+      // Show sample data when database is empty
+      const samplePhotographers = [
+        {
+          id: '1',
+          profiles: {
+            id: '1',
+            first_name: 'John',
+            last_name: 'Doe',
+            avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+            location: 'New York, NY'
+          },
+          photographer_profiles: {
+            specialties: ['Wedding', 'Portrait', 'Engagement'],
+            is_approved: true
+          },
+          services_count: 5
+        },
+        {
+          id: '2',
+          profiles: {
+            id: '2',
+            first_name: 'Sarah',
+            last_name: 'Smith',
+            avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
+            location: 'Los Angeles, CA'
+          },
+          photographer_profiles: {
+            specialties: ['Event', 'Corporate', 'Concert'],
+            is_approved: true
+          },
+          services_count: 8
+        },
+        {
+          id: '3',
+          profiles: {
+            id: '3',
+            first_name: 'Mike',
+            last_name: 'Johnson',
+            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
+            location: 'Denver, CO'
+          },
+          photographer_profiles: {
+            specialties: ['Nature', 'Adventure', 'Engagement'],
+            is_approved: true
+          },
+          services_count: 3
+        },
+        {
+          id: '4',
+          profiles: {
+            id: '4',
+            first_name: 'Emma',
+            last_name: 'Wilson',
+            avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
+            location: 'Miami, FL'
+          },
+          photographer_profiles: {
+            specialties: ['Fashion', 'Commercial', 'Beauty'],
+            is_approved: true
+          },
+          services_count: 6
+        },
+        {
+          id: '5',
+          profiles: {
+            id: '5',
+            first_name: 'David',
+            last_name: 'Brown',
+            avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
+            location: 'Chicago, IL'
+          },
+          photographer_profiles: {
+            specialties: ['Documentary', 'Street', 'Family'],
+            is_approved: true
+          },
+          services_count: 4
+        }
+      ];
+      setFeaturedPhotographers(samplePhotographers);
     }
 
     // Fetch featured services
@@ -95,7 +175,7 @@ const Home = () => {
       .eq('is_active', true)
       .limit(8);
 
-    if (servicesData) {
+    if (servicesData && servicesData.length > 0) {
       const servicesWithProfiles = await Promise.all(
         servicesData.map(async (service) => {
           const { data: profileData } = await supabase
@@ -115,6 +195,107 @@ const Home = () => {
         })
       );
       setFeaturedServices(servicesWithProfiles);
+    } else {
+      // Show sample services when database is empty
+      const sampleServices = [
+        {
+          id: '1',
+          title: 'Wedding Photography Package',
+          description: 'Complete wedding day coverage including ceremony, reception, and getting ready shots. Includes 500+ edited photos.',
+          price: 2500,
+          photographer_id: '1',
+          profiles: {
+            first_name: 'John',
+            last_name: 'Doe',
+            avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '2',
+          title: 'Engagement Session',
+          description: 'Romantic engagement photoshoot at location of your choice. Perfect for save-the-dates.',
+          price: 450,
+          photographer_id: '1',
+          profiles: {
+            first_name: 'John',
+            last_name: 'Doe',
+            avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '3',
+          title: 'Corporate Event Coverage',
+          description: 'Professional documentation of your corporate event, conference, or business gathering.',
+          price: 800,
+          photographer_id: '2',
+          profiles: {
+            first_name: 'Sarah',
+            last_name: 'Smith',
+            avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '4',
+          title: 'Adventure Engagement Session',
+          description: 'Outdoor adventure engagement shoot in stunning natural locations for adventurous couples.',
+          price: 650,
+          photographer_id: '3',
+          profiles: {
+            first_name: 'Mike',
+            last_name: 'Johnson',
+            avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '5',
+          title: 'Fashion Portfolio Shoot',
+          description: 'Professional fashion photography for models, actors, and influencers. Studio or location options.',
+          price: 750,
+          photographer_id: '4',
+          profiles: {
+            first_name: 'Emma',
+            last_name: 'Wilson',
+            avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '6',
+          title: 'Family Portrait Session',
+          description: 'Natural, candid family photography session. Multiple outfit changes and locations included.',
+          price: 400,
+          photographer_id: '5',
+          profiles: {
+            first_name: 'David',
+            last_name: 'Brown',
+            avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '7',
+          title: 'Brand Photography Session',
+          description: 'Commercial photography for businesses, products, and marketing materials with multiple setups.',
+          price: 950,
+          photographer_id: '4',
+          profiles: {
+            first_name: 'Emma',
+            last_name: 'Wilson',
+            avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face'
+          }
+        },
+        {
+          id: '8',
+          title: 'Concert Photography',
+          description: 'High-energy concert and music event photography. Experienced with low-light environments.',
+          price: 600,
+          photographer_id: '2',
+          profiles: {
+            first_name: 'Sarah',
+            last_name: 'Smith',
+            avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
+          }
+        }
+      ];
+      setFeaturedServices(sampleServices);
     }
   };
 
