@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Camera, Clock, DollarSign, MapPin } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceCard } from "@/components/ServiceCard";
+import { Search, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ServiceWithPhotographer {
@@ -128,14 +130,55 @@ const Services = () => {
     setFilteredServices(filtered);
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading services...</p>
-        </div>
+  const LoadingSkeleton = () => (
+    <div className="container mx-auto px-6 py-8">
+      <div className="mb-8">
+        <Skeleton className="h-8 w-80 mb-2" />
+        <Skeleton className="h-4 w-96" />
       </div>
-    );
+      
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-48" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+              <Skeleton className="h-4 w-20" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 flex-1" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -192,83 +235,7 @@ const Services = () => {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredServices.map((service) => (
-            <Card key={service.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg line-clamp-1">{service.title}</CardTitle>
-                  <div className="flex items-center gap-1 text-lg font-bold text-primary">
-                    <DollarSign className="h-4 w-4" />
-                    {service.price}
-                  </div>
-                </div>
-                
-                {service.duration_hours && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {service.duration_hours} hour{service.duration_hours !== 1 ? 's' : ''}
-                  </div>
-                )}
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {service.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {service.description}
-                  </p>
-                )}
-                
-                {/* Photographer Info */}
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={service.profiles?.avatar_url} />
-                    <AvatarFallback className="text-xs">
-                      {service.profiles?.first_name?.[0]}
-                      {service.profiles?.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
-                      {service.profiles?.first_name} {service.profiles?.last_name}
-                    </p>
-                    {service.profiles?.location && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {service.profiles.location}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Specialties */}
-                {service.photographer_profiles?.specialties && service.photographer_profiles.specialties.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {service.photographer_profiles.specialties.slice(0, 2).map((specialty, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {specialty}
-                      </Badge>
-                    ))}
-                    {service.photographer_profiles.specialties.length > 2 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{service.photographer_profiles.specialties.length - 2}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                
-                <div className="flex gap-2 pt-2">
-                  <Button asChild size="sm" className="flex-1">
-                    <Link to={`/book/${service.photographer_id}/${service.id}`}>
-                      Book Now
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to={`/photographers/${service.photographer_id}`}>
-                      View Profile
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ServiceCard key={service.id} service={service} />
           ))}
         </div>
       )}

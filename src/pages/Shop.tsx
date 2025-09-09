@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Search, DollarSign, Package, User } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProductCard } from "@/components/ProductCard";
+import { ShoppingCart, Search, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProductWithPhotographer {
@@ -120,14 +122,60 @@ const Shop = () => {
 
   const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading shop...</p>
+  const LoadingSkeleton = () => (
+    <div className="container mx-auto px-6 py-8">
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-80 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-10 w-32" />
         </div>
       </div>
-    );
+      
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-48" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Card key={i}>
+            <Skeleton className="aspect-square w-full" />
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div>
+                  <Skeleton className="h-5 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-8 flex-1" />
+                  <Skeleton className="h-8 w-12" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -198,84 +246,11 @@ const Shop = () => {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-square bg-muted/50 relative">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
-                
-                {product.is_digital && (
-                  <Badge className="absolute top-2 right-2" variant="secondary">
-                    Digital
-                  </Badge>
-                )}
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="font-semibold line-clamp-1">{product.title}</h3>
-                    {product.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {product.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      <span className="font-bold text-lg">{product.price}</span>
-                    </div>
-                    
-                    {product.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {product.category}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Photographer Info */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={product.profiles?.avatar_url} />
-                      <AvatarFallback className="text-xs">
-                        {product.profiles?.first_name?.[0]}
-                        {product.profiles?.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="text-xs text-muted-foreground">
-                      by {product.profiles?.first_name} {product.profiles?.last_name}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button 
-                      onClick={() => addToCart(product.id)}
-                      size="sm" 
-                      className="flex-1"
-                      disabled={!product.is_digital && product.inventory_count === 0}
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      {!product.is_digital && product.inventory_count === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/photographers/${product.photographer_id}`}>
-                        <User className="h-3 w-3" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              onAddToCart={addToCart}
+            />
           ))}
         </div>
       )}

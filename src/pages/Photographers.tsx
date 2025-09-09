@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Camera, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PhotographerCard } from "@/components/PhotographerCard";
+import { Camera, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PhotographerProfile {
@@ -26,12 +30,20 @@ interface PhotographerProfile {
 
 const Photographers = () => {
   const [photographers, setPhotographers] = useState<PhotographerProfile[]>([]);
+  const [filteredPhotographers, setFilteredPhotographers] = useState<PhotographerProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchPhotographers();
   }, []);
+
+  useEffect(() => {
+    filterPhotographers();
+  }, [photographers, searchTerm, specialtyFilter, locationFilter]);
 
   const fetchPhotographers = async () => {
     try {
@@ -76,14 +88,104 @@ const Photographers = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading photographers...</p>
-        </div>
+  const filterPhotographers = () => {
+    let filtered = photographers;
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(photographer =>
+        `${photographer.profiles?.first_name} ${photographer.profiles?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        photographer.profiles?.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        photographer.profiles?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        photographer.specialties?.some(specialty => specialty.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Specialty filter
+    if (specialtyFilter !== "all") {
+      filtered = filtered.filter(photographer =>
+        photographer.specialties?.includes(specialtyFilter)
+      );
+    }
+
+    // Location filter
+    if (locationFilter !== "all") {
+      filtered = filtered.filter(photographer =>
+        photographer.profiles?.location === locationFilter
+      );
+    }
+
+    setFilteredPhotographers(filtered);
+  };
+
+  const getUniqueSpecialties = () => {
+    const specialties = new Set<string>();
+    photographers.forEach(photographer => {
+      photographer.specialties?.forEach(specialty => specialties.add(specialty));
+    });
+    return Array.from(specialties);
+  };
+
+  const getUniqueLocations = () => {
+    const locations = new Set<string>();
+    photographers.forEach(photographer => {
+      if (photographer.profiles?.location) {
+        locations.add(photographer.profiles.location);
+      }
+    });
+    return Array.from(locations);
+  };
+
+  const LoadingSkeleton = () => (
+    <div className="container mx-auto px-6 py-8">
+      <div className="mb-8">
+        <Skeleton className="h-8 w-80 mb-2" />
+        <Skeleton className="h-4 w-96" />
       </div>
-    );
+      
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-10 w-48" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-14" />
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -95,81 +197,66 @@ const Photographers = () => {
         </p>
       </div>
 
-      {photographers.length === 0 ? (
+      {/* Filters */}  
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search photographers, specialties, or locations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Specialties</SelectItem>
+                {getUniqueSpecialties().map((specialty) => (
+                  <SelectItem key={specialty} value={specialty}>
+                    {specialty}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {getUniqueLocations().map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {filteredPhotographers.length === 0 ? (
         <div className="text-center py-12">
           <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">No photographers found</h3>
           <p className="text-muted-foreground">
-            Be the first photographer to join our platform!
+            {searchTerm || specialtyFilter !== "all" || locationFilter !== "all"
+              ? "Try adjusting your search criteria"
+              : "Be the first photographer to join our platform!"
+            }
           </p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {photographers.map((photographer) => (
-            <Card key={photographer.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={photographer.profiles?.avatar_url} />
-                    <AvatarFallback>
-                      {photographer.profiles?.first_name?.[0]}
-                      {photographer.profiles?.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {photographer.profiles?.first_name} {photographer.profiles?.last_name}
-                    </CardTitle>
-                    {photographer.profiles?.location && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {photographer.profiles.location}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {photographer.profiles?.bio && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {photographer.profiles.bio}
-                  </p>
-                )}
-                
-                {photographer.specialties && photographer.specialties.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Specialties:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {photographer.specialties.slice(0, 3).map((specialty, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {specialty}
-                        </Badge>
-                      ))}
-                      {photographer.specialties.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{photographer.specialties.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">4.8</span>
-                    <span className="text-xs text-muted-foreground">(24 reviews)</span>
-                  </div>
-                  
-                  <Button asChild size="sm">
-                    <Link to={`/photographers/${photographer.user_id}`}>
-                      View Profile
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          {filteredPhotographers.map((photographer) => (
+            <PhotographerCard key={photographer.id} photographer={photographer} />
           ))}
         </div>
       )}
