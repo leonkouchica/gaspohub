@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhotographerCard } from "@/components/PhotographerCard";
-import { Camera, Search } from "lucide-react";
+import { Camera, Search, Filter, SortAsc } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PhotographerProfile {
@@ -35,6 +35,7 @@ const Photographers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,7 +44,7 @@ const Photographers = () => {
 
   useEffect(() => {
     filterPhotographers();
-  }, [photographers, searchTerm, specialtyFilter, locationFilter]);
+  }, [photographers, searchTerm, specialtyFilter, locationFilter, sortBy]);
 
   const fetchPhotographers = async () => {
     try {
@@ -113,6 +114,26 @@ const Photographers = () => {
       filtered = filtered.filter(photographer =>
         photographer.profiles?.location === locationFilter
       );
+    }
+
+    // Sort photographers
+    switch (sortBy) {
+      case "name":
+        filtered.sort((a, b) => 
+          `${a.profiles?.first_name} ${a.profiles?.last_name}`.localeCompare(
+            `${b.profiles?.first_name} ${b.profiles?.last_name}`
+          )
+        );
+        break;
+      case "location":
+        filtered.sort((a, b) => 
+          (a.profiles?.location || '').localeCompare(b.profiles?.location || '')
+        );
+        break;
+      case "newest":
+      default:
+        // Sort by created_at if available, otherwise maintain original order
+        break;
     }
 
     setFilteredPhotographers(filtered);
@@ -197,14 +218,14 @@ const Photographers = () => {
         </p>
       </div>
 
-      {/* Filters */}  
+      {/* Enhanced Search and Filter Bar */}
       <Card className="mb-8">
         <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search photographers, specialties, or locations..."
+                placeholder="Search photographers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -212,8 +233,9 @@ const Photographers = () => {
             </div>
             
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Specialty" />
+              <SelectTrigger>
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by specialty" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Specialties</SelectItem>
@@ -226,8 +248,8 @@ const Photographers = () => {
             </Select>
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Location" />
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
@@ -238,7 +260,58 @@ const Photographers = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SortAsc className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="name">Name A-Z</SelectItem>
+                <SelectItem value="location">Location</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          
+          {/* Active Filters */}
+          {(searchTerm || specialtyFilter !== "all" || locationFilter !== "all") && (
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+              {searchTerm && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Search: "{searchTerm}"
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="ml-1 text-xs hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              {specialtyFilter !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Specialty: {specialtyFilter}
+                  <button
+                    onClick={() => setSpecialtyFilter("all")}
+                    className="ml-1 text-xs hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              {locationFilter !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Location: {locationFilter}
+                  <button
+                    onClick={() => setLocationFilter("all")}
+                    className="ml-1 text-xs hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

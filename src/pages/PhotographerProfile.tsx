@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Camera, Star, Clock, DollarSign } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { MapPin, Camera, Star, Clock, DollarSign, Image as ImageIcon, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
 
 interface PhotographerData {
   photographer_profiles: {
@@ -34,10 +38,27 @@ interface Service {
   is_active: boolean;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  reviewer_id: string;
+  is_public: boolean;
+  reviewer_profile: {
+    first_name: string;
+    last_name: string;
+    avatar_url: string;
+  };
+}
+
 const PhotographerProfile = () => {
   const { userId } = useParams<{ userId: string }>();
+  const { user } = useAuth();
   const [photographer, setPhotographer] = useState<PhotographerData | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -61,6 +82,7 @@ const PhotographerProfile = () => {
       if (!profileData) {
         setPhotographer(null);
         setServices([]);
+        setReviews([]);
         return;
       }
 
@@ -83,6 +105,37 @@ const PhotographerProfile = () => {
 
       if (servicesError) throw servicesError;
 
+      // Fetch reviews - using separate queries to avoid relationship issues
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('photographer_id', userId)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) throw reviewsError;
+
+      // Fetch reviewer profiles separately
+      const transformedReviews = await Promise.all(
+        (reviewsData || []).map(async (review) => {
+          const { data: reviewerProfile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, avatar_url')
+            .eq('id', review.reviewer_id)
+            .single();
+
+          return {
+            ...review,
+            reviewer_profile: reviewerProfile || { first_name: '', last_name: '', avatar_url: '' }
+          };
+        })
+      );
+
+      // Calculate average rating
+      const avgRating = transformedReviews && transformedReviews.length > 0 
+        ? transformedReviews.reduce((sum, review) => sum + review.rating, 0) / transformedReviews.length
+        : 0;
+
       setPhotographer({
         ...profileData,
         photographer_profiles: photographerProfileData || {
@@ -94,6 +147,8 @@ const PhotographerProfile = () => {
         }
       });
       setServices(servicesData || []);
+      setReviews(transformedReviews);
+      setAverageRating(avgRating);
     } catch (error) {
       toast({
         title: "Error loading photographer",
@@ -102,6 +157,41 @@ const PhotographerProfile = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!user || !photographer) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to send a message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: userId,
+          subject: `Inquiry about photography services`,
+          content: `Hi ${photographer.first_name}, I'm interested in your photography services. Could we discuss the details?`
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message sent!",
+        description: "Your message has been sent to the photographer",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to send message",
+        description: "Could not send your message. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -160,8 +250,8 @@ const PhotographerProfile = () => {
               <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">4.8</span>
-                  <span className="text-sm text-muted-foreground">(24 reviews)</span>
+                  <span className="font-medium">{averageRating.toFixed(1)}</span>
+                  <span className="text-sm text-muted-foreground">({reviews.length} reviews)</span>
                 </div>
                 <Badge variant="outline">Verified</Badge>
               </div>
@@ -174,7 +264,10 @@ const PhotographerProfile = () => {
                 <Button asChild>
                   <Link to={`/book/${userId}`}>Book Service</Link>
                 </Button>
-                <Button variant="outline">Send Message</Button>
+                <Button variant="outline" onClick={handleSendMessage}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Send Message
+                </Button>
               </div>
             </div>
           </div>
@@ -182,55 +275,162 @@ const PhotographerProfile = () => {
       </Card>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Services */}
+        {/* Main Content */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="h-5 w-5" />
-                Services Offered
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {services.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No services available at the moment.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {services.map((service) => (
-                    <div key={service.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold">{service.title}</h3>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-lg font-bold text-primary">
-                            <DollarSign className="h-4 w-4" />
-                            {service.price}
-                          </div>
-                          {service.duration_hours && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {service.duration_hours}h
+          <Tabs defaultValue="services" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            </TabsList>
+            
+            {/* Services Tab */}
+            <TabsContent value="services">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Camera className="h-5 w-5" />
+                    Services Offered
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {services.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No services available at the moment.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {services.map((service) => (
+                        <div key={service.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold">{service.title}</h3>
+                            <div className="text-right">
+                              <div className="flex items-center gap-1 text-lg font-bold text-primary">
+                                <DollarSign className="h-4 w-4" />
+                                {service.price}
+                              </div>
+                              {service.duration_hours && (
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  {service.duration_hours}h
+                                </div>
+                              )}
                             </div>
+                          </div>
+                          {service.description && (
+                            <p className="text-muted-foreground text-sm mb-3">
+                              {service.description}
+                            </p>
                           )}
+                          <Button asChild size="sm">
+                            <Link to={`/book/${userId}/${service.id}`}>
+                              Book This Service
+                            </Link>
+                          </Button>
                         </div>
-                      </div>
-                      {service.description && (
-                        <p className="text-muted-foreground text-sm mb-3">
-                          {service.description}
-                        </p>
-                      )}
-                      <Button asChild size="sm">
-                        <Link to={`/book/${userId}/${service.id}`}>
-                          Book This Service
-                        </Link>
-                      </Button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Portfolio Tab */}
+            <TabsContent value="portfolio">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    Portfolio Gallery
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {photographer?.photographer_profiles.portfolio_images && 
+                   photographer.photographer_profiles.portfolio_images.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {photographer.photographer_profiles.portfolio_images.map((image, index) => (
+                        <AspectRatio key={index} ratio={4/3} className="overflow-hidden rounded-lg">
+                          <img 
+                            src={image} 
+                            alt={`Portfolio image ${index + 1}`}
+                            className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+                          />
+                        </AspectRatio>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">No portfolio images available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Reviews Tab */}
+            <TabsContent value="reviews">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Star className="h-5 w-5" />
+                    Client Reviews ({reviews.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Star className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">No reviews yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {reviews.map((review) => (
+                        <div key={review.id} className="border-b last:border-b-0 pb-6 last:pb-0">
+                          <div className="flex items-start gap-4">
+                            <Avatar>
+                              <AvatarImage src={review.reviewer_profile?.avatar_url} />
+                              <AvatarFallback>
+                                {review.reviewer_profile?.first_name?.[0]}
+                                {review.reviewer_profile?.last_name?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <p className="font-medium">
+                                    {review.reviewer_profile?.first_name} {review.reviewer_profile?.last_name}
+                                  </p>
+                                  <div className="flex items-center gap-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star 
+                                        key={i} 
+                                        className={`h-4 w-4 ${
+                                          i < review.rating 
+                                            ? 'fill-yellow-400 text-yellow-400' 
+                                            : 'text-gray-300'
+                                        }`} 
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(new Date(review.created_at), "MMM d, yyyy")}
+                                </p>
+                              </div>
+                              {review.comment && (
+                                <p className="text-muted-foreground">{review.comment}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Sidebar */}

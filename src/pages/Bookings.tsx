@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfDay } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BookingWithDetails {
   id: string;
@@ -34,6 +36,9 @@ interface BookingWithDetails {
 const Bookings = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<BookingWithDetails[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -76,6 +81,7 @@ const Bookings = () => {
       );
 
       setBookings(bookingsWithData);
+      setFilteredBookings(bookingsWithData);
     } catch (error) {
       toast({
         title: "Error loading bookings",
@@ -86,6 +92,45 @@ const Bookings = () => {
       setLoading(false);
     }
   };
+
+  const filterBookings = () => {
+    let filtered = [...bookings];
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+
+    // Filter by date
+    const today = startOfDay(new Date());
+    switch (dateFilter) {
+      case "upcoming":
+        filtered = filtered.filter(booking => 
+          isAfter(new Date(booking.booking_date), today)
+        );
+        break;
+      case "past":
+        filtered = filtered.filter(booking => 
+          isBefore(new Date(booking.booking_date), today)
+        );
+        break;
+      case "today":
+        filtered = filtered.filter(booking => {
+          const bookingDate = startOfDay(new Date(booking.booking_date));
+          return bookingDate.getTime() === today.getTime();
+        });
+        break;
+      default:
+        // "all" - no date filtering
+        break;
+    }
+
+    setFilteredBookings(filtered);
+  };
+
+  useEffect(() => {
+    filterBookings();
+  }, [statusFilter, dateFilter, bookings]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -134,22 +179,100 @@ const Bookings = () => {
         </p>
       </div>
 
-      {bookings.length === 0 ? (
+      {/* Filter Controls */}
+      <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger>
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Dates</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="past">Past</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center text-sm text-muted-foreground">
+            Showing {filteredBookings.length} of {bookings.length} bookings
+          </div>
+        </div>
+      </div>
+
+      {/* Bookings Tabs */}
+      <Tabs defaultValue="all" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 max-w-md">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          {renderBookingsList(filteredBookings)}
+        </TabsContent>
+        
+        <TabsContent value="upcoming">
+          {renderBookingsList(filteredBookings.filter(b => 
+            isAfter(new Date(b.booking_date), startOfDay(new Date()))
+          ))}
+        </TabsContent>
+        
+        <TabsContent value="past">
+          {renderBookingsList(filteredBookings.filter(b => 
+            isBefore(new Date(b.booking_date), startOfDay(new Date()))
+          ))}
+        </TabsContent>
+        
+        <TabsContent value="pending">
+          {renderBookingsList(filteredBookings.filter(b => b.status === 'pending'))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+
+  function renderBookingsList(bookingsToShow: BookingWithDetails[]) {
+    if (bookingsToShow.length === 0) {
+      return (
         <Card>
           <CardContent className="text-center py-12">
             <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No bookings yet</h3>
+            <h3 className="text-lg font-medium mb-2">No bookings found</h3>
             <p className="text-muted-foreground mb-4">
-              Start by browsing photographers and their services
+              {bookings.length === 0 
+                ? "Start by browsing photographers and their services"
+                : "Try adjusting your filters to see more bookings"
+              }
             </p>
-            <Button asChild>
-              <Link to="/photographers">Find Photographers</Link>
-            </Button>
+            {bookings.length === 0 && (
+              <Button asChild>
+                <Link to="/photographers">Find Photographers</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-6">
-          {bookings.map((booking) => (
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {bookingsToShow.map((booking) => (
             <Card key={booking.id} className="overflow-hidden">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
@@ -259,11 +382,10 @@ const Bookings = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  }
 };
 
 export default Bookings;
