@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Camera, ShoppingBag, Users, TrendingUp, Clock } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { Calendar, Camera, ShoppingBag, Users, TrendingUp, Clock, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardStats {
@@ -29,6 +31,18 @@ interface RecentBooking {
   };
 }
 
+interface TrendingService {
+  id: string;
+  title: string;
+  price: number;
+  photographer_id: string;
+  profiles: {
+    first_name: string;
+    last_name: string;
+    avatar_url: string;
+  };
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -38,6 +52,7 @@ const Dashboard = () => {
     favoritePhotographers: 0,
   });
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
+  const [trendingServices, setTrendingServices] = useState<TrendingService[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -99,6 +114,35 @@ const Dashboard = () => {
       });
 
       setRecentBookings(bookingsWithData.slice(0, 5));
+
+      // Fetch trending services
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true)
+        .limit(4);
+
+      if (servicesData) {
+        const servicesWithProfiles = await Promise.all(
+          servicesData.map(async (service) => {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, avatar_url')
+              .eq('id', service.photographer_id)
+              .single();
+
+            return {
+              ...service,
+              profiles: profileData || {
+                first_name: '',
+                last_name: '',
+                avatar_url: ''
+              }
+            };
+          })
+        );
+        setTrendingServices(servicesWithProfiles);
+      }
     } catch (error) {
       toast({
         title: "Error loading dashboard",
@@ -137,6 +181,8 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <Breadcrumbs />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
           Welcome back, {user?.user_metadata?.first_name || user?.email?.split('@')[0]}!
@@ -246,13 +292,13 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div>
+        {/* Quick Actions & Trending */}
+        <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <Button asChild className="w-full" size="lg">
                 <Link to="/photographers">
                   <Camera className="mr-2 h-4 w-4" />
@@ -282,6 +328,45 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Trending Services Widget */}
+          {trendingServices.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Trending Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {trendingServices.map((service) => (
+                  <div key={service.id} className="flex items-start gap-3 pb-4 border-b last:border-b-0 last:pb-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={service.profiles?.avatar_url} />
+                      <AvatarFallback>
+                        {service.profiles?.first_name?.[0]}
+                        {service.profiles?.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium truncate">{service.title}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        by {service.profiles?.first_name} {service.profiles?.last_name}
+                      </p>
+                      <p className="text-sm font-semibold text-primary mt-1">
+                        ${service.price}
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`/book/${service.photographer_id}/${service.id}`}>
+                        Book
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

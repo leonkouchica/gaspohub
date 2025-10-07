@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceCard } from "@/components/ServiceCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Search, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -183,6 +184,8 @@ const Services = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <Breadcrumbs />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Photography Services</h1>
         <p className="text-muted-foreground">

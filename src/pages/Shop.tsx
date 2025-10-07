@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/ProductCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ShoppingCart, Search, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,6 +36,8 @@ const Shop = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("featured");
   const [cart, setCart] = useState<{[key: string]: number}>({});
   const { toast } = useToast();
 
@@ -44,7 +47,7 @@ const Shop = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchTerm, categoryFilter]);
+  }, [products, searchTerm, categoryFilter, priceFilter, sortBy]);
 
   const fetchProducts = async () => {
     try {
@@ -89,6 +92,7 @@ const Shop = () => {
   const filterProducts = () => {
     let filtered = products;
 
+    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(product =>
         product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,8 +101,47 @@ const Shop = () => {
       );
     }
 
+    // Category filter
     if (categoryFilter !== "all") {
       filtered = filtered.filter(product => product.category === categoryFilter);
+    }
+
+    // Price filter
+    if (priceFilter !== "all") {
+      switch (priceFilter) {
+        case "under-50":
+          filtered = filtered.filter(product => product.price < 50);
+          break;
+        case "50-100":
+          filtered = filtered.filter(product => product.price >= 50 && product.price <= 100);
+          break;
+        case "100-200":
+          filtered = filtered.filter(product => product.price >= 100 && product.price <= 200);
+          break;
+        case "over-200":
+          filtered = filtered.filter(product => product.price > 200);
+          break;
+      }
+    }
+
+    // Sort products
+    switch (sortBy) {
+      case "price-low":
+        filtered = [...filtered].sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        filtered = [...filtered].sort((a, b) => b.price - a.price);
+        break;
+      case "name-asc":
+        filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "name-desc":
+        filtered = [...filtered].sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case "featured":
+      default:
+        // Keep original order
+        break;
     }
 
     setFilteredProducts(filtered);
@@ -180,6 +223,8 @@ const Shop = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <Breadcrumbs />
+      
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -203,8 +248,8 @@ const Shop = () => {
       {/* Filters */}
       <Card className="mb-8">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
@@ -215,7 +260,7 @@ const Shop = () => {
             </div>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger>
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -225,6 +270,38 @@ const Shop = () => {
                     {category}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={priceFilter} onValueChange={setPriceFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Price range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All prices</SelectItem>
+                <SelectItem value="under-50">Under $50</SelectItem>
+                <SelectItem value="50-100">$50 - $100</SelectItem>
+                <SelectItem value="100-200">$100 - $200</SelectItem>
+                <SelectItem value="over-200">Over $200</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+            </p>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="featured">Featured</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                <SelectItem value="name-desc">Name: Z to A</SelectItem>
               </SelectContent>
             </Select>
           </div>
