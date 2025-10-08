@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { 
   Camera, 
   Users, 
@@ -6,7 +7,8 @@ import {
   ShoppingBag, 
   User,
   MessageSquare,
-  Home
+  Home,
+  Shield
 } from "lucide-react";
 import {
   Sidebar,
@@ -19,6 +21,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -32,8 +36,25 @@ const navigationItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { user } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data } = await supabase.rpc('is_admin');
+      setIsAdmin(data || false);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === path;
@@ -63,6 +84,16 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/dashboard/admin" className={getNavClass("/dashboard/admin")}>
+                      <Shield className="h-4 w-4" />
+                      {state !== "collapsed" && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
