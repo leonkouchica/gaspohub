@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhotographerCard } from "@/components/PhotographerCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Camera, Search, Filter, SortAsc } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -211,6 +212,7 @@ const Photographers = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <Breadcrumbs />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Professional Photographers</h1>
         <p className="text-muted-foreground">
