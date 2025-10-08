@@ -34,6 +34,10 @@ const navigationItems = [
   { title: "Profile", url: "/profile", icon: User },
 ];
 
+const adminNavigationItems = [
+  { title: "Admin Dashboard", url: "/dashboard/admin", icon: Shield },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user } = useAuth();
@@ -84,19 +88,29 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/dashboard/admin" className={getNavClass("/dashboard/admin")}>
-                      <Shield className="h-4 w-4" />
-                      {state !== "collapsed" && <span>Admin</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNavigationItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className={getNavClass(item.url)}>
+                        <item.icon className="h-4 w-4" />
+                        {state !== "collapsed" && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );
