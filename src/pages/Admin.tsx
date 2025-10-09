@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
 interface UserWithRoles {
@@ -56,6 +56,63 @@ interface AdminOrder {
   }[];
 }
 
+interface AdminBooking {
+  id: string;
+  booking_date: string;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  initial_payment_released: boolean;
+  final_payment_released: boolean;
+  created_at: string;
+  client_profile: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+  photographer_profile: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+  services: {
+    title: string;
+  };
+}
+
+interface AdminProduct {
+  id: string;
+  title: string;
+  price: number;
+  is_active: boolean;
+  is_digital: boolean;
+  category: string | null;
+  created_at: string;
+  profiles: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
+interface AdminReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  is_public: boolean;
+  created_at: string;
+  reviewer_profile: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+  photographer_profile: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
 const Admin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -63,6 +120,9 @@ const Admin = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [photographers, setPhotographers] = useState<PendingPhotographer[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [bookings, setBookings] = useState<AdminBooking[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,6 +156,9 @@ const Admin = () => {
         fetchUsers(),
         fetchPhotographers(),
         fetchOrders(),
+        fetchBookings(),
+        fetchProducts(),
+        fetchReviews(),
       ]);
     } finally {
       setLoading(false);
@@ -252,6 +315,108 @@ const Admin = () => {
     }
   };
 
+  const fetchBookings = async () => {
+    const { data: bookingsData, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        services (title)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (bookingsData) {
+      const clientIds = bookingsData.map(b => b.client_id);
+      const photographerIds = bookingsData.map(b => b.photographer_id);
+      
+      const { data: clientProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', clientIds);
+
+      const { data: photographerProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', photographerIds);
+
+      const enrichedData = bookingsData.map(booking => {
+        const clientProfile = clientProfiles?.find(p => p.id === booking.client_id);
+        const photographerProfile = photographerProfiles?.find(p => p.id === booking.photographer_id);
+        return {
+          ...booking,
+          client_profile: clientProfile || { email: '', first_name: null, last_name: null },
+          photographer_profile: photographerProfile || { email: '', first_name: null, last_name: null }
+        };
+      });
+
+      setBookings(enrichedData);
+    }
+  };
+
+  const fetchProducts = async () => {
+    const { data: productsData, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (productsData) {
+      const photographerIds = productsData.map(p => p.photographer_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', photographerIds);
+
+      const enrichedData = productsData.map(product => {
+        const profile = profiles?.find(p => p.id === product.photographer_id);
+        return {
+          ...product,
+          profiles: profile || { email: '', first_name: null, last_name: null }
+        };
+      });
+
+      setProducts(enrichedData);
+    }
+  };
+
+  const fetchReviews = async () => {
+    const { data: reviewsData, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (reviewsData) {
+      const reviewerIds = reviewsData.map(r => r.reviewer_id);
+      const photographerIds = reviewsData.map(r => r.photographer_id);
+      
+      const { data: reviewerProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', reviewerIds);
+
+      const { data: photographerProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', photographerIds);
+
+      const enrichedData = reviewsData.map(review => {
+        const reviewerProfile = reviewerProfiles?.find(p => p.id === review.reviewer_id);
+        const photographerProfile = photographerProfiles?.find(p => p.id === review.photographer_id);
+        return {
+          ...review,
+          reviewer_profile: reviewerProfile || { email: '', first_name: null, last_name: null },
+          photographer_profile: photographerProfile || { email: '', first_name: null, last_name: null }
+        };
+      });
+
+      setReviews(enrichedData);
+    }
+  };
+
   const handleOrderStatusChange = async (orderId: string, status: string) => {
     try {
       const { error } = await supabase
@@ -266,6 +431,99 @@ const Admin = () => {
         description: "Order status updated successfully",
       });
       fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBookingStatusChange = async (bookingId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Booking status updated successfully",
+      });
+      fetchBookings();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePaymentRelease = async (bookingId: string, paymentType: 'initial' | 'final') => {
+    try {
+      const field = paymentType === 'initial' ? 'initial_payment_released' : 'final_payment_released';
+      const { error } = await supabase
+        .from('bookings')
+        .update({ [field]: true })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment released successfully`,
+      });
+      fetchBookings();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleProductVisibility = async (productId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: isActive })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Product ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+      fetchProducts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReviewVisibility = async (reviewId: string, isPublic: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({ is_public: isPublic })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Review ${isPublic ? 'made public' : 'hidden'} successfully`,
+      });
+      fetchReviews();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -320,9 +578,21 @@ const Admin = () => {
             <Camera className="h-4 w-4" />
             Photographers
           </TabsTrigger>
+          <TabsTrigger value="bookings" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Bookings
+          </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
             Orders
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Products
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Reviews
           </TabsTrigger>
         </TabsList>
 
@@ -577,6 +847,325 @@ const Admin = () => {
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bookings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bookings Management</CardTitle>
+              <CardDescription>
+                View all bookings and manage payment releases
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Booking ID</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Photographer</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell className="font-mono text-sm">
+                        {booking.id.substring(0, 8)}...
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {booking.client_profile.first_name && booking.client_profile.last_name
+                              ? `${booking.client_profile.first_name} ${booking.client_profile.last_name}`
+                              : "No name"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {booking.client_profile.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {booking.photographer_profile.first_name && booking.photographer_profile.last_name
+                              ? `${booking.photographer_profile.first_name} ${booking.photographer_profile.last_name}`
+                              : "No name"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {booking.services.title}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {new Date(booking.booking_date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ${booking.total_amount.toFixed(2)}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={booking.initial_payment_released ? "default" : "outline"} className="text-xs">
+                            Initial: {booking.initial_payment_released ? "Released" : "Pending"}
+                          </Badge>
+                          <Badge variant={booking.final_payment_released ? "default" : "outline"} className="text-xs">
+                            Final: {booking.final_payment_released ? "Released" : "Pending"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-2">
+                          <Select
+                            value={booking.status}
+                            onValueChange={(value) => handleBookingStatusChange(booking.id, value)}
+                          >
+                            <SelectTrigger className="w-32 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="confirmed">Confirmed</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex gap-1">
+                            {!booking.initial_payment_released && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7"
+                                onClick={() => handlePaymentRelease(booking.id, 'initial')}
+                              >
+                                Release Initial
+                              </Button>
+                            )}
+                            {!booking.final_payment_released && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7"
+                                onClick={() => handlePaymentRelease(booking.id, 'final')}
+                              >
+                                Release Final
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Moderation</CardTitle>
+              <CardDescription>
+                Manage product visibility and approval
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Photographer</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="font-medium">{product.title}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {product.profiles.first_name && product.profiles.last_name
+                              ? `${product.profiles.first_name} ${product.profiles.last_name}`
+                              : "No name"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {product.profiles.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ${product.price.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{product.category || "Uncategorized"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={product.is_digital ? "default" : "secondary"}>
+                          {product.is_digital ? "Digital" : "Physical"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {product.is_active ? (
+                          <Badge variant="default">
+                            <Eye className="h-3 w-3 mr-1" />
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">
+                            <EyeOff className="h-3 w-3 mr-1" />
+                            Hidden
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(product.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {product.is_active ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleProductVisibility(product.id, false)}
+                            >
+                              <EyeOff className="h-4 w-4 mr-1" />
+                              Hide
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleProductVisibility(product.id, true)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Activate
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Review Moderation</CardTitle>
+              <CardDescription>
+                Manage review visibility and flag inappropriate content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reviewer</TableHead>
+                    <TableHead>Photographer</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead>Comment</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reviews.map((review) => (
+                    <TableRow key={review.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {review.reviewer_profile.first_name && review.reviewer_profile.last_name
+                              ? `${review.reviewer_profile.first_name} ${review.reviewer_profile.last_name}`
+                              : "No name"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {review.reviewer_profile.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {review.photographer_profile.first_name && review.photographer_profile.last_name
+                              ? `${review.photographer_profile.first_name} ${review.photographer_profile.last_name}`
+                              : "No name"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">{review.rating}</span>
+                          <span className="text-yellow-500">★</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate text-sm">
+                          {review.comment || "No comment"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {review.is_public ? (
+                          <Badge variant="default">
+                            <Eye className="h-3 w-3 mr-1" />
+                            Public
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">
+                            <EyeOff className="h-3 w-3 mr-1" />
+                            Hidden
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {review.is_public ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReviewVisibility(review.id, false)}
+                            >
+                              <EyeOff className="h-4 w-4 mr-1" />
+                              Hide
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleReviewVisibility(review.id, true)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Make Public
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
