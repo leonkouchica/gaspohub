@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface UserWithRoles {
   id: string;
@@ -60,6 +61,7 @@ interface AdminBooking {
   id: string;
   booking_date: string;
   total_amount: number;
+  commission_rate: number;
   status: string;
   payment_status: string;
   initial_payment_released: boolean;
@@ -113,6 +115,18 @@ interface AdminReview {
   };
 }
 
+interface AnalyticsData {
+  totalRevenue: number;
+  totalCommission: number;
+  totalUsers: number;
+  totalBookings: number;
+  totalOrders: number;
+  monthlyRevenue: { month: string; revenue: number; commission: number }[];
+  userGrowth: { month: string; users: number }[];
+  bookingStats: { status: string; count: number }[];
+  orderStats: { status: string; count: number }[];
+}
+
 const Admin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -123,6 +137,7 @@ const Admin = () => {
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -160,9 +175,97 @@ const Admin = () => {
         fetchProducts(),
         fetchReviews(),
       ]);
+      calculateAnalytics();
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateAnalytics = () => {
+    // Calculate total revenue and commission
+    const bookingRevenue = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
+    const bookingCommission = bookings.reduce((sum, b) => sum + Number(b.total_amount) * (Number(b.commission_rate) || 15) / 100, 0);
+    const orderRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+    const orderCommission = orders.reduce((sum, o) => sum + Number(o.commission_amount), 0);
+
+    // Monthly revenue data (last 6 months)
+    const monthlyData: Record<string, { revenue: number; commission: number }> = {};
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      return d.toISOString().substring(0, 7);
+    }).reverse();
+
+    last6Months.forEach(month => {
+      monthlyData[month] = { revenue: 0, commission: 0 };
+    });
+
+    bookings.forEach(b => {
+      const month = b.created_at.substring(0, 7);
+      if (monthlyData[month]) {
+        monthlyData[month].revenue += Number(b.total_amount);
+        monthlyData[month].commission += Number(b.total_amount) * (Number(b.commission_rate) || 15) / 100;
+      }
+    });
+
+    orders.forEach(o => {
+      const month = o.created_at.substring(0, 7);
+      if (monthlyData[month]) {
+        monthlyData[month].revenue += Number(o.total_amount);
+        monthlyData[month].commission += Number(o.commission_amount);
+      }
+    });
+
+    const monthlyRevenue = Object.entries(monthlyData).map(([month, data]) => ({
+      month: new Date(month + '-01').toLocaleDateString('en', { month: 'short', year: '2-digit' }),
+      revenue: data.revenue,
+      commission: data.commission,
+    }));
+
+    // User growth data
+    const userGrowthData: Record<string, number> = {};
+    last6Months.forEach(month => {
+      userGrowthData[month] = 0;
+    });
+
+    users.forEach(u => {
+      const month = u.created_at.substring(0, 7);
+      if (userGrowthData[month] !== undefined) {
+        userGrowthData[month]++;
+      }
+    });
+
+    let cumulative = 0;
+    const userGrowth = Object.entries(userGrowthData).map(([month, count]) => {
+      cumulative += count;
+      return {
+        month: new Date(month + '-01').toLocaleDateString('en', { month: 'short', year: '2-digit' }),
+        users: cumulative,
+      };
+    });
+
+    // Booking and order stats by status
+    const bookingStatMap: Record<string, number> = {};
+    bookings.forEach(b => {
+      bookingStatMap[b.status] = (bookingStatMap[b.status] || 0) + 1;
+    });
+
+    const orderStatMap: Record<string, number> = {};
+    orders.forEach(o => {
+      orderStatMap[o.status] = (orderStatMap[o.status] || 0) + 1;
+    });
+
+    setAnalytics({
+      totalRevenue: bookingRevenue + orderRevenue,
+      totalCommission: bookingCommission + orderCommission,
+      totalUsers: users.length,
+      totalBookings: bookings.length,
+      totalOrders: orders.length,
+      monthlyRevenue,
+      userGrowth,
+      bookingStats: Object.entries(bookingStatMap).map(([status, count]) => ({ status, count })),
+      orderStats: Object.entries(orderStatMap).map(([status, count]) => ({ status, count })),
+    });
   };
 
   const fetchUsers = async () => {
@@ -568,8 +671,12 @@ const Admin = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="users" className="space-y-6">
+      <Tabs defaultValue="analytics" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users
@@ -595,6 +702,144 @@ const Admin = () => {
             Reviews
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {analytics && (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">${analytics.totalRevenue.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">From all transactions</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Platform Commission</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-primary">${analytics.totalCommission.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">Total earnings</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{analytics.totalUsers}</div>
+                    <p className="text-xs text-muted-foreground">Registered users</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{analytics.totalBookings}</div>
+                    <p className="text-xs text-muted-foreground">Service bookings</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{analytics.totalOrders}</div>
+                    <p className="text-xs text-muted-foreground">Product orders</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue & Commission Trend</CardTitle>
+                    <CardDescription>Last 6 months revenue and platform commission</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={analytics.monthlyRevenue}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                        <Legend />
+                        <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" name="Revenue" strokeWidth={2} />
+                        <Line type="monotone" dataKey="commission" stroke="hsl(var(--chart-2))" name="Commission" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Growth</CardTitle>
+                    <CardDescription>Cumulative user registrations over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={analytics.userGrowth}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="users" stroke="hsl(var(--chart-1))" name="Total Users" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Booking Status Distribution</CardTitle>
+                    <CardDescription>Current status of all bookings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={analytics.bookingStats}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="status" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" name="Bookings" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Order Status Distribution</CardTitle>
+                    <CardDescription>Current status of all orders</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={analytics.orderStats}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="status" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="count" fill="hsl(var(--chart-2))" name="Orders" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
           <Card>
