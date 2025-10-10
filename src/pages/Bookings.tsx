@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
 
 interface BookingWithDetails {
   id: string;
@@ -133,33 +134,6 @@ const Bookings = () => {
     filterBookings();
   }, [statusFilter, dateFilter, bookings]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'pending':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'failed':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
 
   if (loading) {
     return (
@@ -285,12 +259,12 @@ const Bookings = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Badge className={getStatusColor(booking.status)}>
+                    <StatusBadge variant={getStatusVariant(booking.status)}>
                       {booking.status}
-                    </Badge>
-                    <Badge variant="outline" className={getPaymentStatusColor(booking.payment_status)}>
+                    </StatusBadge>
+                    <StatusBadge variant={getStatusVariant(booking.payment_status)}>
                       {booking.payment_status}
-                    </Badge>
+                    </StatusBadge>
                   </div>
                 </div>
               </CardHeader>

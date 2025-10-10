@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Camera, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const PublicHeader = () => {
   const { user } = useAuth();
@@ -49,7 +50,8 @@ export const PublicHeader = () => {
           </nav>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">
@@ -104,6 +106,9 @@ export const PublicHeader = () => {
               ))}
               
               <div className="flex flex-col gap-2 pt-4 border-t">
+                <div className="flex justify-center pb-2">
+                  <ThemeToggle />
+                </div>
                 {user ? (
                   <>
                     <span className="text-sm text-muted-foreground">

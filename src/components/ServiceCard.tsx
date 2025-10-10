@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock, DollarSign, MapPin } from "lucide-react";
+import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 
 interface ServiceCardProps {
   service: {
@@ -56,9 +57,8 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
         <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
           <Avatar className="h-8 w-8">
             <AvatarImage src={service.profiles?.avatar_url} />
-            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-              {service.profiles?.first_name?.[0]}
-              {service.profiles?.last_name?.[0]}
+            <AvatarFallback>
+              <AvatarPlaceholder className="h-8 w-8" type="photographer" />
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -91,12 +91,12 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
         )}
         
         <div className="flex gap-2 pt-2">
-          <Button asChild size="sm" className="flex-1 shadow-sm">
+          <Button asChild size="sm" className="flex-1 shadow-sm hover:shadow-md transition-shadow">
             <Link to={`/book/${service.photographer_id}/${service.id}`}>
               Book Now
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="hover:bg-accent transition-colors">
             <Link to={`/photographers/${service.photographer_id}`}>
               View Profile
             </Link>

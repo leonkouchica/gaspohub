@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Calendar, Camera, ShoppingBag, Users, TrendingUp, Clock, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
 
 interface DashboardStats {
   totalBookings: number;
@@ -154,20 +155,6 @@ const Dashboard = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (loading) {
     return (
@@ -277,9 +264,9 @@ const Dashboard = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getStatusColor(booking.status)}>
+                        <StatusBadge variant={getStatusVariant(booking.status)}>
                           {booking.status}
-                        </Badge>
+                        </StatusBadge>
                         <p className="text-sm font-medium mt-1">
                           ${booking.total_amount}
                         </p>

@@ -38,6 +38,19 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* Status colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 98%;
+
+    /* Gradients and effects */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 25%;
     --sidebar-primary: 0 0% 9%;
@@ -73,6 +86,14 @@ All colors MUST be HSL.
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
+    /* Status colors - dark mode */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 9%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 9%;
+    --info: 221 83% 60%;
+    --info-foreground: 0 0% 9%;
+
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 0 84% 60%;
@@ -94,5 +115,21 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Focus visible styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Improved link styling */
+  a {
+    @apply transition-colors duration-200;
   }
 }

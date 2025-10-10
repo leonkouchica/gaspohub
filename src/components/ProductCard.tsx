@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ShoppingCart, DollarSign, Package, User } from "lucide-react";
+import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 
 interface ProductCardProps {
   product: {
@@ -76,9 +77,8 @@ export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           <div className="flex items-center gap-2 pt-2 border-t">
             <Avatar className="h-6 w-6">
               <AvatarImage src={product.profiles?.avatar_url} />
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                {product.profiles?.first_name?.[0]}
-                {product.profiles?.last_name?.[0]}
+              <AvatarFallback>
+                <AvatarPlaceholder className="h-6 w-6" type="photographer" />
               </AvatarFallback>
             </Avatar>
             <p className="text-xs text-muted-foreground">
@@ -90,13 +90,13 @@ export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             <Button 
               onClick={() => onAddToCart(product.id)}
               size="sm" 
-              className="flex-1 shadow-sm"
+              className="flex-1 shadow-sm hover:shadow-md transition-shadow"
               disabled={!product.is_digital && product.inventory_count === 0}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
               {!product.is_digital && product.inventory_count === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="hover:bg-accent transition-colors">
               <Link to={`/photographers/${product.photographer_id}`}>
                 <User className="h-3 w-3" />
               </Link>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Star } from "lucide-react";
+import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 
 interface PhotographerCardProps {
   photographer: {
@@ -27,9 +28,8 @@ export const PhotographerCard = ({ photographer }: PhotographerCardProps) => {
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12 ring-2 ring-primary/20">
             <AvatarImage src={photographer.profiles?.avatar_url} />
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {photographer.profiles?.first_name?.[0]}
-              {photographer.profiles?.last_name?.[0]}
+            <AvatarFallback>
+              <AvatarPlaceholder className="h-12 w-12" type="photographer" />
             </AvatarFallback>
           </Avatar>
           <div>
@@ -73,12 +73,12 @@ export const PhotographerCard = ({ photographer }: PhotographerCardProps) => {
         
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <Star className="h-4 w-4 fill-primary text-primary" />
             <span className="text-sm font-medium">4.8</span>
             <span className="text-xs text-muted-foreground">(24 reviews)</span>
           </div>
           
-          <Button asChild size="sm" className="shadow-sm">
+          <Button asChild size="sm" className="shadow-sm hover:shadow-md transition-shadow">
             <Link to={`/photographers/${photographer.user_id}`}>
               View Profile
             </Link>
