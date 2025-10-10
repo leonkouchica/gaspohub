@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface UserWithRoles {
@@ -130,6 +130,7 @@ interface AnalyticsData {
 const Admin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [photographers, setPhotographers] = useState<PendingPhotographer[]>([]);
@@ -139,6 +140,8 @@ const Admin = () => {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentTab = searchParams.get('tab') || 'analytics';
 
   useEffect(() => {
     if (user) {
@@ -671,7 +674,7 @@ const Admin = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="analytics" className="space-y-6">
+      <Tabs value={currentTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
         <TabsList>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
