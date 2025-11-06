@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter } from "lucide-react";
+import { ReviewDialog } from "@/components/ReviewDialog";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +24,7 @@ interface BookingWithDetails {
   job_details: string;
   payment_status: string;
   created_at: string;
+  photographer_id: string;
   services: {
     title: string;
     duration_hours: number;
@@ -42,6 +44,8 @@ const Bookings = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -220,6 +224,15 @@ const Bookings = () => {
           {renderBookingsList(filteredBookings.filter(b => b.status === 'pending'))}
         </TabsContent>
       </Tabs>
+
+      {selectedBooking && (
+        <ReviewDialog
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          photographerId={selectedBooking.photographer_id}
+          bookingId={selectedBooking.id}
+        />
+      )}
     </div>
   );
 
@@ -349,10 +362,16 @@ const Bookings = () => {
                   )}
                   
                   {booking.status === 'completed' && (
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/reviews/new?booking=${booking.id}`}>
-                        Leave Review
-                      </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setReviewDialogOpen(true);
+                      }}
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      Leave Review
                     </Button>
                   )}
                 </div>

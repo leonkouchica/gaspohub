@@ -10,7 +10,8 @@ import {
   Home,
   Shield,
   BarChart3,
-  Package
+  Package,
+  CreditCard
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,17 @@ const navigationItems = [
   { title: "Profile", url: "/profile", icon: User },
 ];
 
+const photographerNavigationItems = [
+  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Photographers", url: "/photographers", icon: Users },
+  { title: "Services", url: "/services", icon: Camera },
+  { title: "My Bookings", url: "/bookings", icon: Calendar },
+  { title: "Shop", url: "/shop", icon: ShoppingBag },
+  { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Profile", url: "/profile", icon: User },
+  { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
+];
+
 const adminNavigationItems = [
   { title: "Analytics", url: "/dashboard/admin?tab=analytics", icon: BarChart3 },
   { title: "Users", url: "/dashboard/admin?tab=users", icon: Users },
@@ -52,10 +64,12 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPhotographer, setIsPhotographer] = useState(false);
 
   useEffect(() => {
     if (user) {
       checkAdminStatus();
+      checkPhotographerStatus();
     }
   }, [user]);
 
@@ -65,6 +79,20 @@ export function AppSidebar() {
       setIsAdmin(data || false);
     } catch (error) {
       setIsAdmin(false);
+    }
+  };
+
+  const checkPhotographerStatus = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id)
+        .eq('role', 'photographer')
+        .single();
+      setIsPhotographer(!!data);
+    } catch (error) {
+      setIsPhotographer(false);
     }
   };
 
@@ -82,12 +110,12 @@ export function AppSidebar() {
   return (
     <Sidebar className={state === "collapsed" ? "w-14" : "w-60"}>
       <SidebarContent>
-        {!isAdmin ? (
+        {isAdmin ? (
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navigationItems.map((item) => (
+                {adminNavigationItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass(item.url)}>
@@ -102,10 +130,10 @@ export function AppSidebar() {
           </SidebarGroup>
         ) : (
           <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavigationItems.map((item) => (
+                {(isPhotographer ? photographerNavigationItems : navigationItems).map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClass(item.url)}>

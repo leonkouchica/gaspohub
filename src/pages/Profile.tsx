@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { FileUpload } from "@/components/FileUpload";
 import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -325,13 +326,28 @@ const Profile = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile.avatar_url} />
-                  <AvatarFallback className="text-xl">
-                    {profile.first_name?.[0]}{profile.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex items-start gap-6">
+                <div className="flex-shrink-0">
+                  {editing ? (
+                    <FileUpload
+                      bucket="avatars"
+                      path={user?.id || ""}
+                      accept="image/*"
+                      maxSize={5 * 1024 * 1024}
+                      onUploadComplete={(url) => {
+                        setProfile(prev => prev ? {...prev, avatar_url: url} : null);
+                      }}
+                      className="w-20"
+                    />
+                  ) : (
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarFallback className="text-xl">
+                        {profile.first_name?.[0]}{profile.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
                 <div>
                   <h3 className="text-xl font-semibold">
                     {profile.first_name} {profile.last_name}
