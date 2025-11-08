@@ -18,6 +18,8 @@ import Messages from "./pages/Messages";
 import Shop from "./pages/Shop";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
+import OrderTracking from "./pages/OrderTracking";
+import Availability from "./pages/Availability";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +76,8 @@ const App = () => (
               <Route path="messages" element={<Messages />} />
               <Route path="profile" element={<Profile />} />
               <Route path="payment-settings" element={<PaymentSettings />} />
+              <Route path="orders" element={<OrderTracking />} />
+              <Route path="availability" element={<Availability />} />
               <Route path="admin" element={<Admin />} />
             </Route>
             

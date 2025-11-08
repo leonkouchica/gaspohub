@@ -50,6 +50,28 @@ const Messages = () => {
   useEffect(() => {
     if (user) {
       fetchMessages();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('messages-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `sender_id=eq.${user.id},recipient_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Message change received:', payload);
+            fetchMessages(); // Refetch messages on any change
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

@@ -11,7 +11,8 @@ import {
   Shield,
   BarChart3,
   Package,
-  CreditCard
+  CreditCard,
+  Clock
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const navigationItems = [
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/bookings", icon: Calendar },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
+  { title: "Orders", url: "/dashboard/orders", icon: Package },
   { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Profile", url: "/profile", icon: User },
 ];
@@ -42,6 +44,7 @@ const photographerNavigationItems = [
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/bookings", icon: Calendar },
+  { title: "Availability", url: "/dashboard/availability", icon: Clock },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Profile", url: "/profile", icon: User },

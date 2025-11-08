@@ -192,6 +192,42 @@ export type Database = {
         }
         Relationships: []
       }
+      photographer_availability: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          is_available: boolean
+          notes: string | null
+          photographer_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          photographer_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          photographer_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photographer_profiles: {
         Row: {
           created_at: string | null
