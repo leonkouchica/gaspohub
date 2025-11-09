@@ -1,109 +1,55 @@
-import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShoppingCart, DollarSign, Package, User } from "lucide-react";
-import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
+import { ShoppingCart, Heart } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
+import { SocialShare } from "./SocialShare";
 
 interface ProductCardProps {
   product: {
     id: string;
     title: string;
-    description: string;
+    description: string | null;
     price: number;
-    category: string;
-    images: string[];
+    category: string | null;
+    images: string[] | null;
     is_digital: boolean;
-    inventory_count: number;
     photographer_id: string;
-    profiles: {
-      first_name: string;
-      last_name: string;
-      avatar_url: string;
-    };
   };
-  onAddToCart: (productId: string) => void;
 }
 
-export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+export function ProductCard({ product }: ProductCardProps) {
+  const imageUrl = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.svg";
+  const { isFavorite, loading, toggleFavorite } = useFavorites("product", product.id);
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-      <div className="aspect-square bg-muted/50 relative overflow-hidden">
-        {product.images && product.images.length > 0 ? (
-          <img
-            src={product.images[0]}
-            alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
-        
+    <Card className="overflow-hidden">
+      <div className="aspect-square relative">
+        <img src={imageUrl} alt={product.title} className="w-full h-full object-cover" />
         {product.is_digital && (
-          <Badge className="absolute top-2 right-2 shadow-sm" variant="secondary">
-            Digital
-          </Badge>
+          <Badge className="absolute top-2 right-2">Digital</Badge>
         )}
       </div>
-      
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-semibold line-clamp-1">{product.title}</h3>
-            {product.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {product.description}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <span className="font-bold text-lg">{product.price}</span>
-            </div>
-            
-            {product.category && (
-              <Badge variant="outline" className="text-xs">
-                {product.category}
-              </Badge>
-            )}
-          </div>
-
-          {/* Photographer Info */}
-          <div className="flex items-center gap-2 pt-2 border-t">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={product.profiles?.avatar_url} />
-              <AvatarFallback>
-                <AvatarPlaceholder className="h-6 w-6" type="photographer" />
-              </AvatarFallback>
-            </Avatar>
-            <p className="text-xs text-muted-foreground">
-              by {product.profiles?.first_name} {product.profiles?.last_name}
-            </p>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button 
-              onClick={() => onAddToCart(product.id)}
-              size="sm" 
-              className="flex-1 shadow-sm hover:shadow-md transition-shadow"
-              disabled={!product.is_digital && product.inventory_count === 0}
-            >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              {!product.is_digital && product.inventory_count === 0 ? 'Out of Stock' : 'Add to Cart'}
-            </Button>
-            <Button asChild variant="outline" size="sm" className="hover:bg-accent transition-colors">
-              <Link to={`/photographers/${product.photographer_id}`}>
-                <User className="h-3 w-3" />
-              </Link>
-            </Button>
-          </div>
+      <CardHeader>
+        <CardTitle className="line-clamp-1">{product.title}</CardTitle>
+        <CardDescription className="line-clamp-2">{product.description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-bold">${product.price}</span>
+          {product.category && <Badge variant="outline">{product.category}</Badge>}
         </div>
       </CardContent>
+      <CardFooter className="flex gap-2">
+        <Button className="flex-1">
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Add to Cart
+        </Button>
+        <Button variant="outline" size="icon" onClick={toggleFavorite} disabled={loading}>
+          <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+        </Button>
+        <SocialShare title={product.title} description={product.description || ""} />
+      </CardFooter>
     </Card>
   );
-};
+}

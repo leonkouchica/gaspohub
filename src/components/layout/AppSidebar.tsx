@@ -41,6 +41,7 @@ const navigationItems = [
 
 const photographerNavigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/bookings", icon: Calendar },

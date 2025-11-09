@@ -20,6 +20,8 @@ import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
 import OrderTracking from "./pages/OrderTracking";
 import Availability from "./pages/Availability";
+import PhotographerOnboarding from "./pages/PhotographerOnboarding";
+import PhotographerAnalytics from "./pages/PhotographerAnalytics";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -78,6 +80,8 @@ const App = () => (
               <Route path="payment-settings" element={<PaymentSettings />} />
               <Route path="orders" element={<OrderTracking />} />
               <Route path="availability" element={<Availability />} />
+              <Route path="onboarding" element={<PhotographerOnboarding />} />
+              <Route path="analytics" element={<PhotographerAnalytics />} />
               <Route path="admin" element={<Admin />} />
             </Route>
             

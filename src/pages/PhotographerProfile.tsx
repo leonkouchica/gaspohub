@@ -8,10 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { MapPin, Camera, Star, Clock, DollarSign, Image as ImageIcon, MessageSquare } from "lucide-react";
+import { MapPin, Camera, Star, Clock, DollarSign, Image as ImageIcon, MessageSquare, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { useFavorites } from "@/hooks/useFavorites";
+import { SocialShare } from "@/components/SocialShare";
 
 interface PhotographerData {
   photographer_profiles: {
@@ -55,6 +57,7 @@ interface Review {
 const PhotographerProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
+  const { isFavorite, loading: favoriteLoading, toggleFavorite } = useFavorites("photographer", userId || "");
   const [photographer, setPhotographer] = useState<PhotographerData | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -268,6 +271,18 @@ const PhotographerProfile = () => {
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Send Message
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={toggleFavorite}
+                  disabled={favoriteLoading}
+                >
+                  <Heart className={`h-4 w-4 mr-2 ${isFavorite ? "fill-current" : ""}`} />
+                  {isFavorite ? "Saved" : "Save"}
+                </Button>
+                <SocialShare
+                  title={`${photographer?.first_name} ${photographer?.last_name} - Photographer`}
+                  description={photographer?.bio || "Check out this photographer's profile"}
+                />
               </div>
             </div>
           </div>
