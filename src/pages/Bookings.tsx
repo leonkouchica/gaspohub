@@ -138,6 +138,30 @@ const Bookings = () => {
     filterBookings();
   }, [statusFilter, dateFilter, bookings]);
 
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking cancelled",
+        description: "Your booking has been cancelled successfully",
+      });
+
+      fetchBookings();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   if (loading) {
     return (
@@ -356,7 +380,11 @@ const Bookings = () => {
                   </Button>
                   
                   {booking.status === 'pending' && (
-                    <Button variant="destructive" size="sm">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleCancelBooking(booking.id)}
+                    >
                       Cancel Booking
                     </Button>
                   )}

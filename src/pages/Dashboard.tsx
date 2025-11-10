@@ -74,6 +74,13 @@ const Dashboard = () => {
 
       if (bookingsError) throw bookingsError;
 
+      // Fetch favorite photographers count
+      const { count: favCount } = await supabase
+        .from('favorites')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .eq('item_type', 'photographer');
+
       // Fetch related data for each booking
       const bookingsWithData = await Promise.all(
         (bookings || []).map(async (booking) => {
@@ -111,7 +118,7 @@ const Dashboard = () => {
         totalBookings,
         upcomingBookings,
         totalSpent,
-        favoritePhotographers: 0, // TODO: implement favorites
+        favoritePhotographers: favCount || 0,
       });
 
       setRecentBookings(bookingsWithData.slice(0, 5));
