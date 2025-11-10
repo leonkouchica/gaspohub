@@ -59,12 +59,15 @@ const Messages = () => {
           {
             event: '*',
             schema: 'public',
-            table: 'messages',
-            filter: `sender_id=eq.${user.id},recipient_id=eq.${user.id}`
+            table: 'messages'
           },
           (payload) => {
             console.log('Message change received:', payload);
-            fetchMessages(); // Refetch messages on any change
+            // Only refetch if the message involves the current user
+            const message = payload.new as any;
+            if (message.sender_id === user.id || message.recipient_id === user.id) {
+              fetchMessages();
+            }
           }
         )
         .subscribe();
