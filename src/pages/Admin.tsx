@@ -358,8 +358,32 @@ const Admin = () => {
   };
 
   const handleRoleChange = async (userId: string, role: 'admin' | 'photographer' | 'client', action: 'add' | 'remove') => {
+    // Add confirmation for admin role
+    if (role === 'admin' && action === 'add') {
+      const confirmed = window.confirm(
+        '⚠️ WARNING: You are about to grant admin privileges. This will give the user full access to all platform data and settings. Are you sure?'
+      );
+      if (!confirmed) return;
+    }
+
     try {
       if (action === 'add') {
+        // Check if role already exists to prevent duplicate key errors
+        const { data: existing } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', role)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "Info",
+            description: "User already has this role",
+          });
+          return;
+        }
+
         const { error } = await supabase
           .from('user_roles')
           .insert([{ user_id: userId, role }]);
@@ -396,13 +420,22 @@ const Admin = () => {
 
       if (error) throw error;
 
-      // If approving, add photographer role
+      // If approving, add photographer role (check if exists first)
       if (approved) {
         const photographer = photographers.find(p => p.id === photographerId);
         if (photographer) {
-          await supabase
+          const { data: existing } = await supabase
             .from('user_roles')
-            .insert({ user_id: photographer.user_id, role: 'photographer' });
+            .select('id')
+            .eq('user_id', photographer.user_id)
+            .eq('role', 'photographer')
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase
+              .from('user_roles')
+              .insert({ user_id: photographer.user_id, role: 'photographer' });
+          }
         }
       }
 
@@ -570,6 +603,12 @@ const Admin = () => {
   };
 
   const handlePaymentRelease = async (bookingId: string, paymentType: 'initial' | 'final') => {
+    const confirmed = window.confirm(
+      `⚠️ You are about to mark ${paymentType} payment as released. This is a flag only and does not transfer actual funds. Ensure payment has been processed externally. Continue?`
+    );
+    
+    if (!confirmed) return;
+
     try {
       const field = paymentType === 'initial' ? 'initial_payment_released' : 'final_payment_released';
       const { error } = await supabase
@@ -581,7 +620,7 @@ const Admin = () => {
 
       toast({
         title: "Success",
-        description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment released successfully`,
+        description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment marked as released`,
       });
       fetchBookings();
     } catch (error: any) {

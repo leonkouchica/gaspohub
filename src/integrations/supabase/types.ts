@@ -216,6 +216,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          created_at: string
+          id: string
+          paystack_account_id: string | null
+          stripe_account_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          paystack_account_id?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          paystack_account_id?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       photographer_availability: {
         Row: {
           created_at: string

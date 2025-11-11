@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,25 +8,122 @@ import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CreditCard, Building, DollarSign, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const PaymentSettings = () => {
-  const [stripeEnabled, setStripeEnabled] = useState(false);
-  const [paystackEnabled, setPaystackEnabled] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // Payment settings state
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [stripeAccountId, setStripeAccountId] = useState("");
+  const [paystackAccountId, setPaystackAccountId] = useState("");
+  
+  // Commission data
+  const [avgCommissionRate, setAvgCommissionRate] = useState(15);
+  const [totalEarnings, setTotalEarnings] = useState(0);
 
-  const handleConnectStripe = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Stripe integration will be available once you set up your account",
-    });
+  useEffect(() => {
+    if (user) {
+      fetchPaymentSettings();
+      fetchCommissionData();
+    }
+  }, [user]);
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_settings')
+        .select('*')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setBankName(data.bank_name || "");
+        setAccountNumber(data.account_number || "");
+        setAccountName(data.account_name || "");
+        setStripeAccountId(data.stripe_account_id || "");
+        setPaystackAccountId(data.paystack_account_id || "");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConnectPaystack = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Paystack integration will be available once you set up your account",
-    });
+  const fetchCommissionData = async () => {
+    try {
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('total_amount, commission_rate')
+        .eq('photographer_id', user!.id);
+
+      if (bookings && bookings.length > 0) {
+        const avgRate = bookings.reduce((sum, b) => sum + (Number(b.commission_rate) || 15), 0) / bookings.length;
+        const total = bookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
+        const earnings = total - (total * (avgRate / 100));
+        
+        setAvgCommissionRate(Math.round(avgRate));
+        setTotalEarnings(earnings);
+      }
+    } catch (error: any) {
+      console.error('Error fetching commission data:', error);
+    }
   };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('payment_settings')
+        .upsert({
+          user_id: user.id,
+          bank_name: bankName,
+          account_number: accountNumber,
+          account_name: accountName,
+          stripe_account_id: stripeAccountId,
+          paystack_account_id: paystackAccountId,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Payment settings saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -50,61 +147,104 @@ const PaymentSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Stripe */}
-              <div className="flex items-start justify-between p-4 border rounded-lg">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <CreditCard className="h-6 w-6 text-primary" />
+              {/* Bank Account Details */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Bank Account Details</h3>
+                <div className="grid gap-4">
+                  <div>
+                    <Label htmlFor="bank_name">Bank Name</Label>
+                    <Input
+                      id="bank_name"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="Enter your bank name"
+                    />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold">Stripe</h3>
-                      <Badge variant={stripeEnabled ? "default" : "secondary"}>
-                        {stripeEnabled ? "Connected" : "Not Connected"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Accept credit cards, debit cards, and digital wallets
-                    </p>
+                    <Label htmlFor="account_number">Account Number</Label>
+                    <Input
+                      id="account_number"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="Enter your account number"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="account_name">Account Name</Label>
+                    <Input
+                      id="account_name"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="Enter account holder name"
+                    />
                   </div>
                 </div>
-                <Button
-                  onClick={handleConnectStripe}
-                  variant={stripeEnabled ? "outline" : "default"}
-                  size="sm"
-                >
-                  {stripeEnabled ? "Manage" : "Connect"}
-                </Button>
               </div>
 
               <Separator />
 
-              {/* Paystack */}
-              <div className="flex items-start justify-between p-4 border rounded-lg">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Building className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold">Paystack</h3>
-                      <Badge variant={paystackEnabled ? "default" : "secondary"}>
-                        {paystackEnabled ? "Connected" : "Not Connected"}
-                      </Badge>
+              {/* Payment Gateway IDs */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Payment Gateway Accounts</h3>
+                
+                {/* Stripe */}
+                <div className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <CreditCard className="h-6 w-6 text-primary" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Accept payments from customers in Africa
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold">Stripe</h4>
+                        <Badge variant={stripeAccountId ? "default" : "secondary"}>
+                          {stripeAccountId ? "Connected" : "Not Connected"}
+                        </Badge>
+                      </div>
+                      <Input
+                        value={stripeAccountId}
+                        onChange={(e) => setStripeAccountId(e.target.value)}
+                        placeholder="Enter your Stripe Account ID"
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Connect your Stripe account to accept card payments
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <Button
-                  onClick={handleConnectPaystack}
-                  variant={paystackEnabled ? "outline" : "default"}
-                  size="sm"
-                >
-                  {paystackEnabled ? "Manage" : "Connect"}
-                </Button>
+
+                {/* Paystack */}
+                <div className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Building className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold">Paystack</h4>
+                        <Badge variant={paystackAccountId ? "default" : "secondary"}>
+                          {paystackAccountId ? "Connected" : "Not Connected"}
+                        </Badge>
+                      </div>
+                      <Input
+                        value={paystackAccountId}
+                        onChange={(e) => setPaystackAccountId(e.target.value)}
+                        placeholder="Enter your Paystack Account ID"
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Connect your Paystack account for payments in Africa
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <Separator />
+
+              <Button onClick={handleSaveSettings} disabled={saving} className="w-full">
+                {saving ? "Saving..." : "Save Payment Settings"}
+              </Button>
             </CardContent>
           </Card>
 
@@ -119,34 +259,30 @@ const PaymentSettings = () => {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="service_commission">Service Bookings</Label>
+                  <Label>Your Avg. Commission Rate</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <Input
-                      id="service_commission"
                       type="number"
-                      defaultValue="15"
+                      value={avgCommissionRate}
                       disabled
                     />
                     <span className="text-sm text-muted-foreground">%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Platform fee for service bookings
+                    Average platform fee across your bookings
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="product_commission">Product Sales</Label>
+                  <Label>Total Earnings (After Commission)</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <Input
-                      id="product_commission"
-                      type="number"
-                      defaultValue="10"
+                      value={`$${totalEarnings.toFixed(2)}`}
                       disabled
                     />
-                    <span className="text-sm text-muted-foreground">%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Platform fee for product sales
+                    Your total earnings after platform commission
                   </p>
                 </div>
               </div>
@@ -155,7 +291,7 @@ const PaymentSettings = () => {
                 <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="text-sm text-muted-foreground">
                   <p className="font-medium mb-1">Commission rates are set by the platform</p>
-                  <p>These rates help maintain and improve the platform services.</p>
+                  <p>These rates help maintain and improve the platform services. Standard rate is 15% for services.</p>
                 </div>
               </div>
             </CardContent>
