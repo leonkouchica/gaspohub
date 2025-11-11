@@ -127,6 +127,21 @@ interface AnalyticsData {
   orderStats: { status: string; count: number }[];
 }
 
+interface AuditLog {
+  id: string;
+  admin_user_id: string;
+  action_type: string;
+  target_user_id: string | null;
+  target_resource_id: string | null;
+  details: any;
+  created_at: string;
+  admin_profile?: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
 const Admin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -139,6 +154,7 @@ const Admin = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const currentTab = searchParams.get('tab') || 'analytics';
@@ -177,10 +193,57 @@ const Admin = () => {
         fetchBookings(),
         fetchProducts(),
         fetchReviews(),
+        fetchAuditLogs(),
       ]);
       calculateAnalytics();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const logAdminAction = async (actionType: string, targetUserId?: string, targetResourceId?: string, details?: any) => {
+    try {
+      await supabase.from('admin_audit_log').insert({
+        admin_user_id: user!.id,
+        action_type: actionType,
+        target_user_id: targetUserId || null,
+        target_resource_id: targetResourceId || null,
+        details: details || null,
+      });
+    } catch (error) {
+      console.error('Failed to log admin action:', error);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const { data: logs, error } = await supabase
+        .from('admin_audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (logs) {
+        const adminIds = [...new Set(logs.map(log => log.admin_user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name')
+          .in('id', adminIds);
+
+        const enrichedLogs = logs.map(log => {
+          const profile = profiles?.find(p => p.id === log.admin_user_id);
+          return {
+            ...log,
+            admin_profile: profile || { email: 'Unknown', first_name: null, last_name: null }
+          };
+        });
+
+        setAuditLogs(enrichedLogs);
+      }
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
     }
   };
 
@@ -388,6 +451,9 @@ const Admin = () => {
           .from('user_roles')
           .insert([{ user_id: userId, role }]);
         if (error) throw error;
+
+        // Log the action
+        await logAdminAction('role_added', userId, undefined, { role });
       } else {
         const { error } = await supabase
           .from('user_roles')
@@ -395,6 +461,9 @@ const Admin = () => {
           .eq('user_id', userId)
           .eq('role', role);
         if (error) throw error;
+
+        // Log the action
+        await logAdminAction('role_removed', userId, undefined, { role });
       }
 
       toast({
@@ -402,6 +471,7 @@ const Admin = () => {
         description: `Role ${action === 'add' ? 'added' : 'removed'} successfully`,
       });
       fetchUsers();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -413,6 +483,8 @@ const Admin = () => {
 
   const handlePhotographerApproval = async (photographerId: string, approved: boolean) => {
     try {
+      const photographer = photographers.find(p => p.id === photographerId);
+      
       const { error } = await supabase
         .from('photographer_profiles')
         .update({ is_approved: approved })
@@ -421,22 +493,24 @@ const Admin = () => {
       if (error) throw error;
 
       // If approving, add photographer role (check if exists first)
-      if (approved) {
-        const photographer = photographers.find(p => p.id === photographerId);
-        if (photographer) {
-          const { data: existing } = await supabase
-            .from('user_roles')
-            .select('id')
-            .eq('user_id', photographer.user_id)
-            .eq('role', 'photographer')
-            .maybeSingle();
+      if (approved && photographer) {
+        const { data: existing } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', photographer.user_id)
+          .eq('role', 'photographer')
+          .maybeSingle();
 
-          if (!existing) {
-            await supabase
-              .from('user_roles')
-              .insert({ user_id: photographer.user_id, role: 'photographer' });
-          }
+        if (!existing) {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: photographer.user_id, role: 'photographer' });
         }
+
+        // Log the action
+        await logAdminAction('photographer_approved', photographer.user_id, photographerId);
+      } else if (photographer) {
+        await logAdminAction('photographer_rejected', photographer.user_id, photographerId);
       }
 
       toast({
@@ -445,6 +519,7 @@ const Admin = () => {
       });
       fetchPhotographers();
       fetchUsers();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -565,11 +640,14 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await logAdminAction('order_status_changed', undefined, orderId, { status });
+
       toast({
         title: "Success",
         description: "Order status updated successfully",
       });
       fetchOrders();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -588,11 +666,14 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await logAdminAction('booking_status_changed', undefined, bookingId, { status });
+
       toast({
         title: "Success",
         description: "Booking status updated successfully",
       });
       fetchBookings();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -618,11 +699,14 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await logAdminAction('payment_released', undefined, bookingId, { paymentType });
+
       toast({
         title: "Success",
         description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment marked as released`,
       });
       fetchBookings();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -641,11 +725,14 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await logAdminAction('product_visibility_changed', undefined, productId, { isActive });
+
       toast({
         title: "Success",
         description: `Product ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
       fetchProducts();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -664,11 +751,14 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await logAdminAction('review_visibility_changed', undefined, reviewId, { isPublic });
+
       toast({
         title: "Success",
         description: `Review ${isPublic ? 'made public' : 'hidden'} successfully`,
       });
       fetchReviews();
+      fetchAuditLogs();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -742,6 +832,10 @@ const Admin = () => {
           <TabsTrigger value="reviews" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             Reviews
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Audit Log
           </TabsTrigger>
         </TabsList>
 
@@ -1456,6 +1550,78 @@ const Admin = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Audit Log</CardTitle>
+              <CardDescription>
+                Track all administrative actions performed on the platform (last 100 entries)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditLogs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {log.admin_profile?.first_name && log.admin_profile?.last_name
+                              ? `${log.admin_profile.first_name} ${log.admin_profile.last_name}`
+                              : log.admin_profile?.email || "Unknown"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {log.admin_profile?.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {log.action_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs text-sm">
+                          {log.details ? (
+                            <pre className="text-xs bg-muted p-2 rounded">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          ) : (
+                            <span className="text-muted-foreground">No additional details</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <p>{new Date(log.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(log.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {auditLogs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No audit log entries found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
