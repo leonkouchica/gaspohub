@@ -685,12 +685,47 @@ const Admin = () => {
 
   const handlePaymentRelease = async (bookingId: string, paymentType: 'initial' | 'final') => {
     const confirmed = window.confirm(
-      `⚠️ You are about to mark ${paymentType} payment as released. This is a flag only and does not transfer actual funds. Ensure payment has been processed externally. Continue?`
+      `Release ${paymentType} payment? This will create a payout record and mark the payment as released.`
     );
     
     if (!confirmed) return;
 
     try {
+      // Get booking details
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select('*, services(title)')
+        .eq('id', bookingId)
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // Calculate payout amount
+      const commissionRate = Number(booking.commission_rate) || 15;
+      const totalAmount = Number(booking.total_amount);
+      const platformCommission = (totalAmount * commissionRate) / 100;
+      const photographerAmount = totalAmount - platformCommission;
+      
+      // For initial payment, release 50%, for final release remaining 50%
+      const payoutAmount = photographerAmount * 0.5;
+
+      // Create payout record
+      const { error: payoutError } = await supabase
+        .from('payouts')
+        .insert({
+          photographer_id: booking.photographer_id,
+          booking_id: bookingId,
+          amount: payoutAmount,
+          payout_type: paymentType,
+          status: 'processing',
+          released_by: user!.id,
+          released_at: new Date().toISOString(),
+          notes: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment for booking: ${booking.services?.title || 'Service'}`,
+        });
+
+      if (payoutError) throw payoutError;
+
+      // Update booking
       const field = paymentType === 'initial' ? 'initial_payment_released' : 'final_payment_released';
       const { error } = await supabase
         .from('bookings')
@@ -699,11 +734,14 @@ const Admin = () => {
 
       if (error) throw error;
 
-      await logAdminAction('payment_released', undefined, bookingId, { paymentType });
+      await logAdminAction('payment_released', booking.photographer_id, bookingId, { 
+        paymentType, 
+        amount: payoutAmount 
+      });
 
       toast({
         title: "Success",
-        description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment marked as released`,
+        description: `${paymentType === 'initial' ? 'Initial' : 'Final'} payment of $${payoutAmount.toFixed(2)} released`,
       });
       fetchBookings();
       fetchAuditLogs();

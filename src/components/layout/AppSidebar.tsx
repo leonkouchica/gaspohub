@@ -12,7 +12,8 @@ import {
   BarChart3,
   Package,
   CreditCard,
-  Clock
+  Clock,
+  DollarSign
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,9 +47,11 @@ const photographerNavigationItems = [
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/bookings", icon: Calendar },
   { title: "Availability", url: "/dashboard/availability", icon: Clock },
+  { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Profile", url: "/profile", icon: User },
+  { title: "Payouts", url: "/dashboard/payouts", icon: DollarSign },
   { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
 ];
 

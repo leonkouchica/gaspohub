@@ -18,6 +18,8 @@ import Messages from "./pages/Messages";
 import Shop from "./pages/Shop";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
+import Products from "./pages/Products";
+import Payouts from "./pages/Payouts";
 import OrderTracking from "./pages/OrderTracking";
 import Availability from "./pages/Availability";
 import PhotographerOnboarding from "./pages/PhotographerOnboarding";
@@ -78,6 +80,8 @@ const App = () => (
               <Route path="messages" element={<Messages />} />
               <Route path="profile" element={<Profile />} />
               <Route path="payment-settings" element={<PaymentSettings />} />
+              <Route path="products" element={<Products />} />
+              <Route path="payouts" element={<Payouts />} />
               <Route path="orders" element={<OrderTracking />} />
               <Route path="availability" element={<Availability />} />
               <Route path="onboarding" element={<PhotographerOnboarding />} />
