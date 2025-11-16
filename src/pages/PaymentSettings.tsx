@@ -28,10 +28,13 @@ const PaymentSettings = () => {
   const [avgCommissionRate, setAvgCommissionRate] = useState(15);
   const [totalEarnings, setTotalEarnings] = useState(0);
 
+  const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
+
   useEffect(() => {
     if (user) {
       fetchPaymentSettings();
       fetchCommissionData();
+      fetchRecentPayouts();
     }
   }, [user]);
 
@@ -80,6 +83,21 @@ const PaymentSettings = () => {
       }
     } catch (error: any) {
       console.error('Error fetching commission data:', error);
+    }
+  };
+
+  const fetchRecentPayouts = async () => {
+    try {
+      const { data } = await supabase
+        .from('payouts')
+        .select('*')
+        .eq('photographer_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentPayouts(data || []);
+    } catch (error) {
+      console.error('Error fetching payouts:', error);
     }
   };
 
@@ -341,6 +359,36 @@ const PaymentSettings = () => {
                   Contact Support
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Payouts */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Payouts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentPayouts.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No payouts yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentPayouts.map((payout) => (
+                    <div key={payout.id} className="flex justify-between items-center py-2 border-b last:border-0">
+                      <div>
+                        <p className="font-medium">${Number(payout.amount).toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{payout.payout_type.replace('_', ' ')}</p>
+                      </div>
+                      <Badge variant={
+                        payout.status === 'completed' ? 'default' : 
+                        payout.status === 'processing' ? 'secondary' : 
+                        'outline'
+                      }>
+                        {payout.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

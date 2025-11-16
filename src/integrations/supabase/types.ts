@@ -285,6 +285,75 @@ export type Database = {
         }
         Relationships: []
       }
+      payouts: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          payment_method: string | null
+          payout_type: string
+          photographer_id: string
+          released_at: string | null
+          released_by: string | null
+          status: string
+          transaction_reference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          payment_method?: string | null
+          payout_type: string
+          photographer_id: string
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          payment_method?: string | null
+          payout_type?: string
+          photographer_id?: string
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photographer_availability: {
         Row: {
           created_at: string
