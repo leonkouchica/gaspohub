@@ -9,12 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface BookingWithDetails {
   id: string;
@@ -46,6 +48,8 @@ const Bookings = () => {
   const [loading, setLoading] = useState(true);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -138,20 +142,38 @@ const Bookings = () => {
     filterBookings();
   }, [statusFilter, dateFilter, bookings]);
 
-  const handleCancelBooking = async (bookingId: string) => {
+  const handleCancelBooking = async () => {
+    if (!selectedBooking || !cancellationReason.trim()) {
+      toast({
+        title: "Cancellation reason required",
+        description: "Please provide a reason for cancellation",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ status: 'cancelled' })
-        .eq('id', bookingId);
+        .update({ 
+          status: 'cancelled',
+          cancellation_reason: cancellationReason,
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: user?.id,
+          refund_status: 'pending'
+        })
+        .eq('id', selectedBooking.id);
 
       if (error) throw error;
 
       toast({
         title: "Booking cancelled",
-        description: "Your booking has been cancelled successfully",
+        description: "Your booking has been cancelled. Refund will be processed shortly.",
       });
 
+      setCancelDialogOpen(false);
+      setCancellationReason("");
+      setSelectedBooking(null);
       fetchBookings();
     } catch (error) {
       toast({
@@ -250,12 +272,48 @@ const Bookings = () => {
       </Tabs>
 
       {selectedBooking && (
-        <ReviewDialog
-          open={reviewDialogOpen}
-          onOpenChange={setReviewDialogOpen}
-          photographerId={selectedBooking.photographer_id}
-          bookingId={selectedBooking.id}
-        />
+        <>
+          <ReviewDialog
+            open={reviewDialogOpen}
+            onOpenChange={setReviewDialogOpen}
+            photographerId={selectedBooking.photographer_id}
+            bookingId={selectedBooking.id}
+          />
+          
+          <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Please provide a reason for cancelling this booking. This action cannot be undone, but you may be eligible for a refund.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Textarea
+                placeholder="Reason for cancellation..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => {
+                  setCancellationReason("");
+                  setSelectedBooking(null);
+                }}>
+                  Keep Booking
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleCancelBooking();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Cancel Booking
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </div>
   );
@@ -383,8 +441,12 @@ const Bookings = () => {
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={() => handleCancelBooking(booking.id)}
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setCancelDialogOpen(true);
+                      }}
                     >
+                      <XCircle className="h-4 w-4 mr-2" />
                       Cancel Booking
                     </Button>
                   )}

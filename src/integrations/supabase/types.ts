@@ -50,6 +50,9 @@ export type Database = {
       bookings: {
         Row: {
           booking_date: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           client_id: string
           commission_rate: number | null
           created_at: string | null
@@ -59,6 +62,9 @@ export type Database = {
           job_details: string | null
           payment_status: string | null
           photographer_id: string
+          refund_amount: number | null
+          refund_status: string | null
+          refunded_at: string | null
           service_id: string
           status: string | null
           total_amount: number
@@ -66,6 +72,9 @@ export type Database = {
         }
         Insert: {
           booking_date: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_id: string
           commission_rate?: number | null
           created_at?: string | null
@@ -75,6 +84,9 @@ export type Database = {
           job_details?: string | null
           payment_status?: string | null
           photographer_id: string
+          refund_amount?: number | null
+          refund_status?: string | null
+          refunded_at?: string | null
           service_id: string
           status?: string | null
           total_amount: number
@@ -82,6 +94,9 @@ export type Database = {
         }
         Update: {
           booking_date?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_id?: string
           commission_rate?: number | null
           created_at?: string | null
@@ -91,6 +106,9 @@ export type Database = {
           job_details?: string | null
           payment_status?: string | null
           photographer_id?: string
+          refund_amount?: number | null
+          refund_status?: string | null
+          refunded_at?: string | null
           service_id?: string
           status?: string | null
           total_amount?: number
@@ -170,6 +188,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -519,7 +576,11 @@ export type Database = {
           comment: string | null
           created_at: string | null
           id: string
+          is_approved: boolean | null
           is_public: boolean | null
+          moderated_at: string | null
+          moderation_notes: string | null
+          moderator_id: string | null
           order_id: string | null
           photographer_id: string
           rating: number
@@ -530,7 +591,11 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          is_approved?: boolean | null
           is_public?: boolean | null
+          moderated_at?: string | null
+          moderation_notes?: string | null
+          moderator_id?: string | null
           order_id?: string | null
           photographer_id: string
           rating: number
@@ -541,7 +606,11 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          is_approved?: boolean | null
           is_public?: boolean | null
+          moderated_at?: string | null
+          moderation_notes?: string | null
+          moderator_id?: string | null
           order_id?: string | null
           photographer_id?: string
           rating?: number

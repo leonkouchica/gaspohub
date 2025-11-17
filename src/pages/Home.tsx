@@ -302,7 +302,7 @@ const Home = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      window.location.href = `/services?search=${encodeURIComponent(searchTerm)}`;
+      window.location.href = `/dashboard/search?q=${encodeURIComponent(searchTerm)}`;
     }
   };
 
