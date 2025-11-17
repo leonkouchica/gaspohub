@@ -26,6 +26,9 @@ import PhotographerOnboarding from "./pages/PhotographerOnboarding";
 import PhotographerAnalytics from "./pages/PhotographerAnalytics";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
+import Search from "./pages/Search";
+import DigitalDownload from "./pages/DigitalDownload";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +90,9 @@ const App = () => (
               <Route path="onboarding" element={<PhotographerOnboarding />} />
               <Route path="analytics" element={<PhotographerAnalytics />} />
               <Route path="admin" element={<Admin />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="search" element={<Search />} />
+              <Route path="download" element={<DigitalDownload />} />
             </Route>
             
             {/* Protected booking route */}

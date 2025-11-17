@@ -13,7 +13,8 @@ import {
   Package,
   CreditCard,
   Clock,
-  DollarSign
+  DollarSign,
+  Bell
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,6 +38,7 @@ const navigationItems = [
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Orders", url: "/dashboard/orders", icon: Package },
   { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/profile", icon: User },
 ];
 
@@ -50,6 +52,7 @@ const photographerNavigationItems = [
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/profile", icon: User },
   { title: "Payouts", url: "/dashboard/payouts", icon: DollarSign },
   { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
@@ -63,6 +66,7 @@ const adminNavigationItems = [
   { title: "Orders", url: "/dashboard/admin?tab=orders", icon: ShoppingBag },
   { title: "Products", url: "/dashboard/admin?tab=products", icon: Package },
   { title: "Reviews", url: "/dashboard/admin?tab=reviews", icon: MessageSquare },
+  { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
 ];
 
 export function AppSidebar() {
