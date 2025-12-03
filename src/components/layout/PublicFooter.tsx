@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import { Camera, Mail, Phone, MapPin } from "lucide-react";
-
 export const PublicFooter = () => {
-  return (
-    <footer className="bg-muted/30 border-t">
+  return <footer className="bg-muted/30 border-t">
       <div className="container mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -65,11 +63,8 @@ export const PublicFooter = () => {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2024 GASPOHUB. All rights reserved.
-          </p>
+          <p className="text-sm text-muted-foreground">© GASPOHUB. All rights reserved.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
