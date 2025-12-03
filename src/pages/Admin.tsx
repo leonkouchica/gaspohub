@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star } from "lucide-react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-
+import { createNotification } from "@/lib/notifications";
 interface UserWithRoles {
   id: string;
   email: string;
@@ -102,7 +102,12 @@ interface AdminReview {
   rating: number;
   comment: string | null;
   is_public: boolean;
+  is_approved: boolean | null;
+  moderation_notes: string | null;
+  moderated_at: string | null;
   created_at: string;
+  reviewer_id: string;
+  photographer_id: string;
   reviewer_profile: {
     email: string;
     first_name: string | null;
@@ -509,8 +514,26 @@ const Admin = () => {
 
         // Log the action
         await logAdminAction('photographer_approved', photographer.user_id, photographerId);
+        
+        // Send notification to photographer
+        await createNotification({
+          user_id: photographer.user_id,
+          title: "Application Approved!",
+          message: "Congratulations! Your photographer application has been approved. You can now start offering services.",
+          type: "approval",
+          action_url: "/dashboard",
+        });
       } else if (photographer) {
         await logAdminAction('photographer_rejected', photographer.user_id, photographerId);
+        
+        // Send notification for rejection
+        await createNotification({
+          user_id: photographer.user_id,
+          title: "Application Status Update",
+          message: "Your photographer application was not approved at this time. Please contact support for more information.",
+          type: "approval",
+          action_url: "/dashboard/onboarding",
+        });
       }
 
       toast({
@@ -794,6 +817,59 @@ const Admin = () => {
       toast({
         title: "Success",
         description: `Review ${isPublic ? 'made public' : 'hidden'} successfully`,
+      });
+      fetchReviews();
+      fetchAuditLogs();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReviewModeration = async (reviewId: string, approved: boolean, notes?: string) => {
+    try {
+      const review = reviews.find(r => r.id === reviewId);
+      
+      const { error } = await supabase
+        .from('reviews')
+        .update({ 
+          is_approved: approved,
+          moderation_notes: notes || null,
+          moderated_at: new Date().toISOString(),
+          moderator_id: user!.id,
+          is_public: approved, // Auto-set visibility based on approval
+        })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      await logAdminAction(
+        approved ? 'review_approved' : 'review_rejected', 
+        review?.reviewer_id, 
+        reviewId, 
+        { approved, notes }
+      );
+
+      // Notify the reviewer
+      if (review) {
+        await createNotification({
+          user_id: review.reviewer_id,
+          title: approved ? "Review Approved" : "Review Not Approved",
+          message: approved 
+            ? "Your review has been approved and is now visible to others."
+            : "Your review was not approved. Please ensure it follows our community guidelines.",
+          type: "review",
+          related_id: reviewId,
+          related_type: "review",
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: `Review ${approved ? 'approved' : 'rejected'} successfully`,
       });
       fetchReviews();
       fetchAuditLogs();
@@ -1496,7 +1572,7 @@ const Admin = () => {
             <CardHeader>
               <CardTitle>Review Moderation</CardTitle>
               <CardDescription>
-                Manage review visibility and flag inappropriate content
+                Approve or reject reviews before they become publicly visible
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1507,7 +1583,8 @@ const Admin = () => {
                     <TableHead>Photographer</TableHead>
                     <TableHead>Rating</TableHead>
                     <TableHead>Comment</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Approval</TableHead>
+                    <TableHead>Visibility</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -1539,7 +1616,7 @@ const Admin = () => {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <span className="font-medium">{review.rating}</span>
-                          <span className="text-yellow-500">★</span>
+                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1548,8 +1625,26 @@ const Admin = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {review.is_public ? (
+                        {review.is_approved === null ? (
+                          <Badge variant="outline">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pending
+                          </Badge>
+                        ) : review.is_approved ? (
                           <Badge variant="default">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Approved
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Rejected
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {review.is_public ? (
+                          <Badge variant="secondary">
                             <Eye className="h-3 w-3 mr-1" />
                             Public
                           </Badge>
@@ -1564,30 +1659,64 @@ const Admin = () => {
                         {new Date(review.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          {review.is_public ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleReviewVisibility(review.id, false)}
-                            >
-                              <EyeOff className="h-4 w-4 mr-1" />
-                              Hide
-                            </Button>
+                        <div className="flex flex-col gap-1">
+                          {review.is_approved === null ? (
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="text-xs h-7"
+                                onClick={() => handleReviewModeration(review.id, true)}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="text-xs h-7"
+                                onClick={() => handleReviewModeration(review.id, false)}
+                              >
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
                           ) : (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleReviewVisibility(review.id, true)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Make Public
-                            </Button>
+                            <div className="flex gap-1">
+                              {review.is_public ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-7"
+                                  onClick={() => handleReviewVisibility(review.id, false)}
+                                >
+                                  <EyeOff className="h-3 w-3 mr-1" />
+                                  Hide
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-7"
+                                  onClick={() => handleReviewVisibility(review.id, true)}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Show
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {reviews.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        No reviews found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

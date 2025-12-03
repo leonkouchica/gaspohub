@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 interface ReviewDialogProps {
   open: boolean;
@@ -50,7 +51,7 @@ export const ReviewDialog = ({
     setSubmitting(true);
 
     try {
-      const { error } = await supabase.from("reviews").insert({
+      const { data: reviewData, error } = await supabase.from("reviews").insert({
         photographer_id: photographerId,
         reviewer_id: user.id,
         rating,
@@ -58,13 +59,24 @@ export const ReviewDialog = ({
         booking_id: bookingId || null,
         order_id: orderId || null,
         is_public: true,
-      });
+        is_approved: null, // Pending moderation
+      }).select().single();
 
       if (error) throw error;
 
+      // Notify the photographer about the new review
+      await createNotification({
+        user_id: photographerId,
+        title: "New Review Received",
+        message: `You received a ${rating}-star review. It will be visible once approved by moderators.`,
+        type: "review",
+        related_id: reviewData.id,
+        related_type: "review",
+      });
+
       toast({
         title: "Review submitted",
-        description: "Thank you for your feedback!",
+        description: "Thank you for your feedback! It will be visible after moderation.",
       });
 
       onOpenChange(false);
