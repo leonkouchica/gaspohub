@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 const bookingSchema = z.object({
   booking_date: z.date({
@@ -133,7 +134,7 @@ const BookService = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert({
           client_id: user.id,
@@ -142,9 +143,49 @@ const BookService = () => {
           booking_date: data.booking_date.toISOString(),
           job_details: data.job_details,
           total_amount: selectedService.price,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Create notification for the photographer
+      await createNotification({
+        user_id: photographerId!,
+        title: "New Booking Request",
+        message: `You have a new booking request for ${selectedService.title} on ${format(data.booking_date, "PPP")}`,
+        type: "booking",
+        related_id: bookingData.id,
+        related_type: "booking",
+        action_url: "/dashboard/bookings",
+      });
+
+      // Create notification for the client
+      await createNotification({
+        user_id: user.id,
+        title: "Booking Submitted",
+        message: `Your booking for ${selectedService.title} has been submitted and is pending confirmation.`,
+        type: "booking",
+        related_id: bookingData.id,
+        related_type: "booking",
+        action_url: "/dashboard/bookings",
+      });
+
+      // Call edge function to send booking confirmation
+      try {
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: {
+            booking_id: bookingData.id,
+            client_id: user.id,
+            photographer_id: photographerId,
+            service_title: selectedService.title,
+            booking_date: data.booking_date.toISOString(),
+          },
+        });
+      } catch (fnError) {
+        console.error('Failed to send booking confirmation:', fnError);
+        // Don't fail the booking if notification fails
+      }
 
       toast({
         title: "Booking created!",

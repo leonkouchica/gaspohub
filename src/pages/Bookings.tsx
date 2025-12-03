@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { createNotification } from "@/lib/notifications";
 
 interface BookingWithDetails {
   id: string;
@@ -165,6 +166,17 @@ const Bookings = () => {
         .eq('id', selectedBooking.id);
 
       if (error) throw error;
+
+      // Notify photographer about the cancellation
+      await createNotification({
+        user_id: selectedBooking.photographer_id,
+        title: "Booking Cancelled",
+        message: `A booking for ${selectedBooking.services?.title} on ${format(new Date(selectedBooking.booking_date), "PPP")} has been cancelled.`,
+        type: "booking",
+        related_id: selectedBooking.id,
+        related_type: "booking",
+        action_url: "/dashboard/bookings",
+      });
 
       toast({
         title: "Booking cancelled",
