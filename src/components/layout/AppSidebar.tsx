@@ -31,29 +31,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
-  { title: "My Bookings", url: "/bookings", icon: Calendar },
+  { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
-  { title: "Orders", url: "/dashboard/orders", icon: Package },
-  { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "My Orders", url: "/dashboard/orders", icon: Package },
+  { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/profile", icon: User },
+  { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
 
 const photographerNavigationItems = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
-  { title: "My Bookings", url: "/bookings", icon: Calendar },
+  { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "Availability", url: "/dashboard/availability", icon: Clock },
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
-  { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "My Orders", url: "/dashboard/orders", icon: Package },
+  { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/profile", icon: User },
+  { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Payouts", url: "/dashboard/payouts", icon: DollarSign },
   { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
 ];

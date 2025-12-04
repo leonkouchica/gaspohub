@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useCart } from "@/hooks/useCart";
 import { SocialShare } from "./SocialShare";
 
 interface ProductCardProps {
@@ -21,6 +22,18 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.svg";
   const { isFavorite, loading, toggleFavorite } = useFavorites("product", product.id);
+  const { addItem } = useCart();
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.images?.[0] || null,
+      is_digital: product.is_digital,
+      photographer_id: product.photographer_id,
+    });
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -41,7 +54,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
       <CardFooter className="flex gap-2">
-        <Button className="flex-1">
+        <Button className="flex-1" onClick={handleAddToCart}>
           <ShoppingCart className="mr-2 h-4 w-4" />
           Add to Cart
         </Button>
