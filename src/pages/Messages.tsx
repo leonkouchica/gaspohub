@@ -1,46 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MessageSquare, Send, User } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MessageSquare, Send, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-interface MessageWithSender {
+interface Message {
   id: string;
-  subject: string;
+  subject: string | null;
   content: string;
   is_read: boolean;
   created_at: string;
   sender_id: string;
   recipient_id: string;
-  booking_id?: string;
-  sender_profile: {
-    first_name: string;
-    last_name: string;
-    avatar_url: string;
-  };
-  recipient_profile: {
-    first_name: string;
-    last_name: string;
-    avatar_url: string;
-  };
+  booking_id: string | null;
+}
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
+interface Conversation {
+  partnerId: string;
+  partner: Profile;
+  lastMessage: Message;
+  unreadCount: number;
+  messages: Message[];
 }
 
 const Messages = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const [messages, setMessages] = useState<MessageWithSender[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<MessageWithSender | null>(null);
-  const [newMessage, setNewMessage] = useState({ subject: "", content: "" });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
@@ -51,7 +55,6 @@ const Messages = () => {
     if (user) {
       fetchMessages();
       
-      // Set up real-time subscription
       const channel = supabase
         .channel('messages-changes')
         .on(
@@ -62,9 +65,7 @@ const Messages = () => {
             table: 'messages'
           },
           (payload) => {
-            console.log('Message change received:', payload);
-            // Only refetch if the message involves the current user
-            const message = payload.new as any;
+            const message = payload.new as Message;
             if (message.sender_id === user.id || message.recipient_id === user.id) {
               fetchMessages();
             }
@@ -79,38 +80,37 @@ const Messages = () => {
   }, [user]);
 
   const fetchMessages = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
-        .order('created_at', { ascending: false });
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      const messagesWithProfiles = await Promise.all(
-        (data || []).map(async (message) => {
-          const { data: senderProfile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, avatar_url')
-            .eq('id', message.sender_id)
-            .single();
+      setMessages(data || []);
 
-          const { data: recipientProfile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, avatar_url')
-            .eq('id', message.recipient_id)
-            .single();
+      // Get unique user IDs
+      const userIds = new Set<string>();
+      (data || []).forEach((msg) => {
+        userIds.add(msg.sender_id);
+        userIds.add(msg.recipient_id);
+      });
 
-          return {
-            ...message,
-            sender_profile: senderProfile || { first_name: '', last_name: '', avatar_url: '' },
-            recipient_profile: recipientProfile || { first_name: '', last_name: '', avatar_url: '' }
-          };
-        })
-      );
+      // Fetch profiles for all users
+      if (userIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .in('id', Array.from(userIds));
 
-      setMessages(messagesWithProfiles);
+        const profileMap = new Map<string, Profile>();
+        (profilesData || []).forEach((p) => profileMap.set(p.id, p));
+        setProfiles(profileMap);
+      }
     } catch (error) {
       toast({
         title: "Error loading messages",
@@ -122,63 +122,95 @@ const Messages = () => {
     }
   };
 
-  const markAsRead = async (messageId: string) => {
-    try {
-      await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('id', messageId)
-        .eq('recipient_id', user?.id);
-    } catch (error) {
-      console.error('Error marking message as read:', error);
-    }
+  // Group messages into conversations
+  const conversations = useMemo(() => {
+    if (!user) return [];
+
+    const conversationMap = new Map<string, Conversation>();
+
+    messages.forEach((msg) => {
+      const partnerId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
+      
+      if (!conversationMap.has(partnerId)) {
+        conversationMap.set(partnerId, {
+          partnerId,
+          partner: profiles.get(partnerId) || { id: partnerId, first_name: null, last_name: null, avatar_url: null },
+          lastMessage: msg,
+          unreadCount: 0,
+          messages: [],
+        });
+      }
+
+      const conv = conversationMap.get(partnerId)!;
+      conv.messages.push(msg);
+      conv.lastMessage = msg;
+      
+      if (!msg.is_read && msg.recipient_id === user.id) {
+        conv.unreadCount++;
+      }
+    });
+
+    return Array.from(conversationMap.values()).sort(
+      (a, b) => new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime()
+    );
+  }, [messages, profiles, user]);
+
+  const selectedConv = conversations.find((c) => c.partnerId === selectedConversation);
+
+  const markAsRead = async (messageIds: string[]) => {
+    if (!user || messageIds.length === 0) return;
+    
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .in('id', messageIds)
+      .eq('recipient_id', user.id);
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        messageIds.includes(m.id) ? { ...m, is_read: true } : m
+      )
+    );
   };
 
-  const handleSelectMessage = (message: MessageWithSender) => {
-    setSelectedMessage(message);
-    if (!message.is_read && message.recipient_id === user?.id) {
-      markAsRead(message.id);
-      setMessages(prev => 
-        prev.map(m => 
-          m.id === message.id ? { ...m, is_read: true } : m
-        )
-      );
+  const handleSelectConversation = (partnerId: string) => {
+    setSelectedConversation(partnerId);
+    
+    const conv = conversations.find((c) => c.partnerId === partnerId);
+    if (conv) {
+      const unreadIds = conv.messages
+        .filter((m) => !m.is_read && m.recipient_id === user?.id)
+        .map((m) => m.id);
+      markAsRead(unreadIds);
     }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.content.trim() || !selectedMessage) return;
+    if (!newMessage.trim() || !selectedConversation || !user) return;
 
     setSending(true);
     try {
-      const recipientId = selectedMessage.sender_id === user?.id 
-        ? selectedMessage.recipient_id 
-        : selectedMessage.sender_id;
-
       const { error } = await supabase
         .from('messages')
         .insert({
-          sender_id: user?.id,
-          recipient_id: recipientId,
-          subject: newMessage.subject || `Re: ${selectedMessage.subject}`,
-          content: newMessage.content,
-          booking_id: selectedMessage.booking_id
+          sender_id: user.id,
+          recipient_id: selectedConversation,
+          content: newMessage,
+          subject: selectedConv?.messages[0]?.subject || null,
         });
 
       if (error) throw error;
 
-      setNewMessage({ subject: "", content: "" });
+      setNewMessage("");
       fetchMessages();
       
       toast({
         title: "Message sent!",
-        description: "Your message has been delivered",
       });
     } catch (error) {
       toast({
         title: "Failed to send message",
-        description: "Could not send your message",
         variant: "destructive",
       });
     } finally {
@@ -205,147 +237,158 @@ const Messages = () => {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Messages List */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Conversations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {messages.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No messages yet</p>
-                </div>
-              ) : (
+      <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-280px)] min-h-[500px]">
+        {/* Conversations List */}
+        <Card className={`lg:col-span-1 ${selectedConversation ? 'hidden lg:block' : ''}`}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageSquare className="h-5 w-5" />
+              Conversations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {conversations.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-muted-foreground">No conversations yet</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[calc(100vh-380px)] min-h-[400px]">
                 <div className="space-y-1">
-                  {messages.map((message) => {
-                    const isFromMe = message.sender_id === user?.id;
-                    const otherProfile = isFromMe ? message.recipient_profile : message.sender_profile;
-                    
+                  {conversations.map((conv) => (
+                    <div
+                      key={conv.partnerId}
+                      onClick={() => handleSelectConversation(conv.partnerId)}
+                      className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b last:border-b-0 ${
+                        selectedConversation === conv.partnerId ? 'bg-muted' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={conv.partner?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {conv.partner?.first_name?.[0]}
+                            {conv.partner?.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-medium truncate">
+                              {conv.partner?.first_name || 'Unknown'} {conv.partner?.last_name || ''}
+                            </p>
+                            {conv.unreadCount > 0 && (
+                              <Badge variant="destructive" className="ml-2">
+                                {conv.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.lastMessage.content}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(conv.lastMessage.created_at), "MMM d, h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Chat Area */}
+        <Card className={`lg:col-span-2 flex flex-col ${!selectedConversation ? 'hidden lg:flex' : ''}`}>
+          {selectedConv ? (
+            <>
+              <CardHeader className="pb-3 border-b flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={() => setSelectedConversation(null)}
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <Avatar>
+                    <AvatarImage src={selectedConv.partner?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {selectedConv.partner?.first_name?.[0]}
+                      {selectedConv.partner?.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-lg">
+                      {selectedConv.partner?.first_name || 'Unknown'} {selectedConv.partner?.last_name || ''}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedConv.messages.length} messages
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {selectedConv.messages.map((msg) => {
+                    const isMe = msg.sender_id === user?.id;
                     return (
                       <div
-                        key={message.id}
-                        onClick={() => handleSelectMessage(message)}
-                        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b last:border-b-0 ${
-                          selectedMessage?.id === message.id ? 'bg-muted' : ''
-                        }`}
+                        key={msg.id}
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={otherProfile?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {otherProfile?.first_name?.[0]}
-                              {otherProfile?.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-sm font-medium truncate">
-                                {otherProfile?.first_name} {otherProfile?.last_name}
-                              </p>
-                              {!message.is_read && message.recipient_id === user?.id && (
-                                <Badge variant="destructive" className="h-2 w-2 p-0 rounded-full" />
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-1 truncate">
-                              {message.subject}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {message.content}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(message.created_at), "MMM d, h:mm a")}
-                            </p>
-                          </div>
+                        <div
+                          className={`max-w-[70%] p-3 rounded-lg ${
+                            isMe
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <p className={`text-xs mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                            {format(new Date(msg.created_at), "h:mm a")}
+                          </p>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </ScrollArea>
 
-        {/* Message Detail & Reply */}
-        <div className="lg:col-span-2">
-          {selectedMessage ? (
-            <Card>
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <Avatar>
-                    <AvatarImage src={
-                      selectedMessage.sender_id === user?.id 
-                        ? selectedMessage.recipient_profile?.avatar_url
-                        : selectedMessage.sender_profile?.avatar_url
-                    } />
-                    <AvatarFallback>
-                      {selectedMessage.sender_id === user?.id
-                        ? `${selectedMessage.recipient_profile?.first_name?.[0]}${selectedMessage.recipient_profile?.last_name?.[0]}`
-                        : `${selectedMessage.sender_profile?.first_name?.[0]}${selectedMessage.sender_profile?.last_name?.[0]}`
+              <div className="p-4 border-t flex-shrink-0">
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <Textarea
+                    placeholder="Type a message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    rows={1}
+                    className="resize-none min-h-[40px]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
                       }
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{selectedMessage.subject}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedMessage.sender_id === user?.id ? 'To' : 'From'}{' '}
-                      {selectedMessage.sender_id === user?.id
-                        ? `${selectedMessage.recipient_profile?.first_name} ${selectedMessage.recipient_profile?.last_name}`
-                        : `${selectedMessage.sender_profile?.first_name} ${selectedMessage.sender_profile?.last_name}`
-                      }
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(selectedMessage.created_at), "MMM d, yyyy 'at' h:mm a")}
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap">{selectedMessage.content}</p>
-                </div>
-
-                <Separator />
-
-                {/* Reply Form */}
-                <form onSubmit={handleSendMessage} className="space-y-4">
-                  <div>
-                    <Label htmlFor="reply-content">Reply</Label>
-                    <Textarea
-                      id="reply-content"
-                      placeholder="Type your reply..."
-                      value={newMessage.content}
-                      onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
-                      rows={4}
-                      className="mt-2"
-                      required
-                    />
-                  </div>
-                  
-                  <Button type="submit" disabled={sending || !newMessage.content.trim()}>
-                    <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Sending..." : "Send Reply"}
+                    }}
+                  />
+                  <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
+                    <Send className="h-4 w-4" />
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </>
           ) : (
-            <Card>
-              <CardContent className="text-center py-12">
+            <CardContent className="flex-1 flex items-center justify-center">
+              <div className="text-center">
                 <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
                 <p className="text-muted-foreground">
-                  Choose a message from the list to view and reply
+                  Choose a conversation from the list to start messaging
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );
