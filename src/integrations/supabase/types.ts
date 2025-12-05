@@ -306,6 +306,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_settings: {
+        Row: {
+          created_at: string
+          display_name: string
+          gateway_name: string
+          id: string
+          is_active: boolean
+          settings: Json | null
+          test_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          gateway_name: string
+          id?: string
+          is_active?: boolean
+          settings?: Json | null
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          gateway_name?: string
+          id?: string
+          is_active?: boolean
+          settings?: Json | null
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           account_name: string | null

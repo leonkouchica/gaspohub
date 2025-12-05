@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard } from "lucide-react";
+import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySettings";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { createNotification } from "@/lib/notifications";
@@ -947,6 +948,10 @@ const Admin = () => {
             <MessageSquare className="h-4 w-4" />
             Reviews
           </TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Payments
+          </TabsTrigger>
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Audit Log
@@ -1793,6 +1798,10 @@ const Admin = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <PaymentGatewaySettings />
         </TabsContent>
       </Tabs>
     </div>
