@@ -124,6 +124,39 @@ export type Database = {
           },
         ]
       }
+      email_settings: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          is_enabled: boolean | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string | null
