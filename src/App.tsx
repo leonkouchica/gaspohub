@@ -33,6 +33,7 @@ import DigitalDownload from "./pages/DigitalDownload";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import PortfolioManagement from "./pages/PortfolioManagement";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ const App = () => (
                 <Route path="admin" element={<Admin />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="download" element={<DigitalDownload />} />
+                <Route path="portfolio" element={<PortfolioManagement />} />
               </Route>
               
               {/* Protected checkout */}

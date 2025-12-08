@@ -14,7 +14,8 @@ import {
   CreditCard,
   Clock,
   DollarSign,
-  Bell
+  Bell,
+  Image as ImageIcon
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +46,7 @@ const navigationItems = [
 const photographerNavigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
+  { title: "Portfolio", url: "/dashboard/portfolio", icon: ImageIcon },
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
