@@ -15,7 +15,8 @@ import {
   Clock,
   DollarSign,
   Bell,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Heart
 } from "lucide-react";
 import {
   Sidebar,
@@ -38,6 +39,7 @@ const navigationItems = [
   { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "My Orders", url: "/dashboard/orders", icon: Package },
+  { title: "Favorites", url: "/dashboard/favorites", icon: Heart },
   { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/dashboard/profile", icon: User },
@@ -54,6 +56,7 @@ const photographerNavigationItems = [
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "My Orders", url: "/dashboard/orders", icon: Package },
+  { title: "Favorites", url: "/dashboard/favorites", icon: Heart },
   { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/dashboard/profile", icon: User },

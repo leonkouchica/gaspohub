@@ -34,6 +34,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import PortfolioManagement from "./pages/PortfolioManagement";
+import Favorites from "./pages/Favorites";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => (
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="download" element={<DigitalDownload />} />
                 <Route path="portfolio" element={<PortfolioManagement />} />
+                <Route path="favorites" element={<Favorites />} />
               </Route>
               
               {/* Protected checkout */}
