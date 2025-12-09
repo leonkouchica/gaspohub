@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Package, Download, ShoppingBag } from "lucide-react";
+import { Package, Download, ShoppingBag, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/SEO";
+import { generateInvoicePDF } from "@/lib/invoice";
 
 interface OrderItem {
   id: string;
@@ -128,6 +130,44 @@ export default function Orders() {
     }
   };
 
+  const handleDownloadInvoice = async (order: Order) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', user?.id)
+        .single();
+
+      generateInvoicePDF({
+        invoiceNumber: order.id.slice(0, 8).toUpperCase(),
+        date: format(new Date(order.created_at), 'MMM d, yyyy'),
+        customerName: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Customer' : 'Customer',
+        customerEmail: profile?.email || user?.email || '',
+        items: order.items.map(item => ({
+          name: item.product?.title || 'Product',
+          quantity: item.quantity,
+          unitPrice: item.unit_price,
+          total: item.total_price,
+        })),
+        subtotal: order.total_amount,
+        total: order.total_amount,
+        shippingAddress: order.shipping_address || undefined,
+        notes: 'Thank you for your purchase! If you have any questions, please contact our support team.',
+      });
+
+      toast({
+        title: "Invoice Downloaded",
+        description: "Your invoice has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-6 py-8">
@@ -159,6 +199,10 @@ export default function Orders() {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO 
+        title="Order History" 
+        description="View and manage your order history. Download invoices and track your purchases."
+      />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Order History</h1>
         <p className="text-muted-foreground">View and track your orders</p>
@@ -227,9 +271,9 @@ export default function Orders() {
                   </div>
                 ))}
 
-                {order.shipping_address && (
-                  <>
-                    <Separator />
+                <Separator />
+                <div className="flex items-center justify-between">
+                  {order.shipping_address && (
                     <div>
                       <h4 className="font-medium mb-1">Shipping Address</h4>
                       <p className="text-sm text-muted-foreground">
@@ -238,8 +282,16 @@ export default function Orders() {
                         {order.shipping_address.country}
                       </p>
                     </div>
-                  </>
-                )}
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadInvoice(order)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Download Invoice
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

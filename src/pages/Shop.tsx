@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 
 interface Product {
   id: string;
@@ -80,6 +81,11 @@ export default function Shop() {
 
   return (
     <div className="container py-8">
+      <SEO 
+        title="Photography Shop"
+        description="Browse and purchase prints, presets, courses and other photography products from professional photographers."
+        keywords="photo prints, photography presets, lightroom presets, photography courses, digital downloads"
+      />
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Photography Shop</h1>
         <p className="text-lg text-muted-foreground">

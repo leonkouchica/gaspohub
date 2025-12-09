@@ -12,6 +12,7 @@ import { PhotographerCard } from "@/components/PhotographerCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Camera, Search, Filter, SortAsc } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/SEO";
 
 interface PhotographerProfile {
   id: string;
@@ -212,6 +213,11 @@ const Photographers = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO 
+        title="Professional Photographers"
+        description="Discover talented photographers for weddings, portraits, events and more. Browse portfolios, check availability and book your session."
+        keywords="professional photographers, wedding photographer, portrait photographer, event photographer, photography booking"
+      />
       <Breadcrumbs />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Professional Photographers</h1>
