@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { createNotification } from "@/lib/notifications";
+import { generateInvoicePDF } from "@/lib/invoice";
 
 interface BookingWithDetails {
   id: string;
@@ -460,6 +461,37 @@ const Bookings = () => {
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Cancel Booking
+                    </Button>
+                  )}
+                  
+                  {(booking.status === 'completed' || booking.status === 'confirmed') && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        generateInvoicePDF({
+                          invoiceNumber: `BK-${booking.id.slice(0, 8).toUpperCase()}`,
+                          date: format(new Date(booking.created_at), "MMM d, yyyy"),
+                          customerName: user?.email?.split('@')[0] || 'Customer',
+                          customerEmail: user?.email || '',
+                          items: [{
+                            name: booking.services?.title || 'Photography Service',
+                            quantity: 1,
+                            unitPrice: booking.total_amount,
+                            total: booking.total_amount
+                          }],
+                          subtotal: booking.total_amount,
+                          total: booking.total_amount,
+                          notes: booking.job_details || `Photography session on ${format(new Date(booking.booking_date), "PPP")} with ${booking.profiles?.first_name} ${booking.profiles?.last_name}`
+                        });
+                        toast({
+                          title: "Invoice Downloaded",
+                          description: "Your booking invoice has been generated"
+                        });
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Download Invoice
                     </Button>
                   )}
                   
