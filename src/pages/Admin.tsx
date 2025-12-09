@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle } from "lucide-react";
+import { DisputeManagement } from "@/components/admin/DisputeManagement";
 import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySettings";
 import { EmailSettings } from "@/components/admin/EmailSettings";
 import { Navigate, useSearchParams } from "react-router-dom";
@@ -961,6 +962,10 @@ const Admin = () => {
             <Shield className="h-4 w-4" />
             Audit Log
           </TabsTrigger>
+          <TabsTrigger value="disputes" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Disputes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -1811,6 +1816,10 @@ const Admin = () => {
 
         <TabsContent value="email">
           <EmailSettings />
+        </TabsContent>
+
+        <TabsContent value="disputes">
+          <DisputeManagement />
         </TabsContent>
       </Tabs>
     </div>

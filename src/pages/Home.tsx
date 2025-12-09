@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Camera, Users, ShoppingBag, Star, Search, ArrowRight, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { SEO } from "@/components/SEO";
 
 interface FeaturedPhotographer {
   id: string;
@@ -308,6 +309,11 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Find & Book Professional Photographers"
+        description="Connect with talented photographers for weddings, portraits, events and more. Browse portfolios, book sessions, and shop prints on PhotoPro Marketplace."
+        keywords="photography, photographers, book photographer, wedding photography, portrait photography, photo prints, photography marketplace"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 py-20">
         <div className="container mx-auto px-6 text-center">
