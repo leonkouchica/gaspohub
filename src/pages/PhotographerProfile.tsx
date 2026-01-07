@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { SEO } from "@/components/SEO";
 import { MapPin, Camera, Star, Clock, DollarSign, Image as ImageIcon, MessageSquare, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -225,10 +226,18 @@ const PhotographerProfile = () => {
     );
   }
 
+  const photographerName = `${photographer.first_name} ${photographer.last_name}`;
+  
   return (
-    <div className="container mx-auto px-6 py-8">
-      {/* Header Section */}
-      <Card className="mb-8">
+    <>
+      <SEO 
+        title={`${photographerName} - Photographer`}
+        description={photographer.bio || `View ${photographerName}'s portfolio, services, and reviews. Book your photography session today.`}
+        keywords={`${photographerName}, photographer, ${photographer.photographer_profiles?.specialties?.join(', ') || 'photography'}`}
+      />
+      <div className="container mx-auto px-6 py-8">
+        {/* Header Section */}
+        <Card className="mb-8">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
             <Avatar className="h-32 w-32 mx-auto md:mx-0">
@@ -506,7 +515,8 @@ const PhotographerProfile = () => {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

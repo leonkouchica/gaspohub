@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
+import { SEO } from "@/components/SEO";
 import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
@@ -209,8 +210,13 @@ const Bookings = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <Breadcrumbs />
+    <>
+      <SEO 
+        title="My Bookings"
+        description="View and manage your photography session bookings."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <Breadcrumbs />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
         <p className="text-muted-foreground">
@@ -326,9 +332,10 @@ const Bookings = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </>
-      )}
+      </>
+    )}
     </div>
+    </>
   );
 
   function renderBookingsList(bookingsToShow: BookingWithDetails[]) {

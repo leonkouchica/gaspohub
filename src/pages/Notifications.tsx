@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -175,8 +176,13 @@ export default function Notifications() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
+    <>
+      <SEO 
+        title="Notifications"
+        description="View your notifications for bookings, orders, and messages."
+      />
+      <div className="container mx-auto p-6">
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -273,6 +279,7 @@ export default function Notifications() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

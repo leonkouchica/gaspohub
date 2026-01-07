@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { SEO } from "@/components/SEO";
 import { Calendar, Camera, ShoppingBag, Users, TrendingUp, Clock, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
@@ -174,8 +175,13 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <Breadcrumbs />
+    <>
+      <SEO 
+        title="Dashboard"
+        description="Manage your bookings, view analytics, and track your photography business."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <Breadcrumbs />
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
@@ -363,7 +369,8 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

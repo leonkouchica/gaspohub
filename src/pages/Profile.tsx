@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { FileUpload } from "@/components/FileUpload";
+import { SEO } from "@/components/SEO";
 import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -286,8 +287,13 @@ const Profile = () => {
   if (!profile) return null;
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <Breadcrumbs />
+    <>
+      <SEO 
+        title="My Profile"
+        description="Manage your account settings, profile information, and preferences."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <Breadcrumbs />
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Profile</h1>
@@ -663,7 +669,8 @@ const Profile = () => {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

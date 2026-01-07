@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { SEO } from "@/components/SEO";
 import { ShoppingCart, Trash2, Plus, Minus, Package } from "lucide-react";
 
 export default function Cart() {
@@ -11,27 +12,38 @@ export default function Cart() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-6 py-12">
-        <Card className="max-w-lg mx-auto text-center">
-          <CardContent className="pt-12 pb-8">
-            <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">
-              Browse our shop to find amazing photography products
-            </p>
-            <Button asChild>
-              <Link to="/shop">Continue Shopping</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <SEO 
+          title="Shopping Cart"
+          description="Review and checkout your photography products and prints."
+        />
+        <div className="container mx-auto px-6 py-12">
+          <Card className="max-w-lg mx-auto text-center">
+            <CardContent className="pt-12 pb-8">
+              <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
+              <p className="text-muted-foreground mb-6">
+                Browse our shop to find amazing photography products
+              </p>
+              <Button asChild>
+                <Link to="/shop">Continue Shopping</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
+    <>
+      <SEO 
+        title="Shopping Cart"
+        description="Review and checkout your photography products and prints."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
         <p className="text-muted-foreground">{totalItems} items in your cart</p>
       </div>
 
@@ -140,6 +152,7 @@ export default function Cart() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
