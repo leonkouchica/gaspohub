@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SEO } from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
 import { CreditCard, MapPin, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { createNotification } from "@/lib/notifications";
@@ -253,8 +254,13 @@ export default function Checkout() {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+    <>
+      <SEO 
+        title="Checkout"
+        description="Complete your purchase securely."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid lg:grid-cols-2 gap-8">
@@ -428,6 +434,7 @@ export default function Checkout() {
           </div>
         </div>
       </form>
-    </div>
+      </div>
+    </>
   );
 }

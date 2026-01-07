@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SEO } from "@/components/SEO";
 import { MessageSquare, Send, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -229,8 +230,13 @@ const Messages = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-8">
+    <>
+      <SEO 
+        title="Messages"
+        description="Communicate with photographers and clients about your bookings."
+      />
+      <div className="container mx-auto px-6 py-8">
+        <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Messages</h1>
         <p className="text-muted-foreground">
           Communicate with photographers and clients
@@ -390,7 +396,8 @@ const Messages = () => {
           )}
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

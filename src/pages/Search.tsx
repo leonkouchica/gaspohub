@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SEO } from "@/components/SEO";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
 import { PhotographerCard } from "@/components/PhotographerCard";
 import { ServiceCard } from "@/components/ServiceCard";
@@ -104,9 +105,15 @@ export default function Search() {
     results.products.length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Search</h1>
+    <>
+      <SEO 
+        title={query ? `Search: ${query}` : "Search"}
+        description="Search for photographers, photography services, and products on SnapConnect."
+        keywords="search photographers, find photography services, photography products"
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">Search</h1>
 
         <form onSubmit={handleSearch} className="flex gap-2 mb-8">
           <Input
@@ -249,6 +256,7 @@ export default function Search() {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

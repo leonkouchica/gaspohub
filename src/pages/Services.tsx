@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceCard } from "@/components/ServiceCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { SEO } from "@/components/SEO";
 import { Search, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -183,8 +184,14 @@ const Services = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <Breadcrumbs />
+    <>
+      <SEO 
+        title="Photography Services"
+        description="Browse and book professional photography services. Find wedding, portrait, event, and commercial photography packages."
+        keywords="photography services, book photographer, wedding photography, portrait session, event photography"
+      />
+      <div className="container mx-auto px-6 py-8">
+        <Breadcrumbs />
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Photography Services</h1>
@@ -242,7 +249,8 @@ const Services = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
