@@ -30,6 +30,100 @@ interface PhotographerProfile {
   };
 }
 
+// Sample photographers data for demo purposes
+const samplePhotographers: PhotographerProfile[] = [
+  {
+    id: "sample-1",
+    user_id: "sample-user-1",
+    specialties: ["Wedding", "Portrait", "Events"],
+    gear: ["Canon EOS R5", "Sony A7 IV"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "Sarah",
+      last_name: "Johnson",
+      bio: "Award-winning wedding and portrait photographer with 10+ years of experience capturing life's most precious moments.",
+      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
+      location: "New York, NY"
+    }
+  },
+  {
+    id: "sample-2",
+    user_id: "sample-user-2",
+    specialties: ["Commercial", "Product", "Fashion"],
+    gear: ["Nikon Z9", "Phase One"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "Michael",
+      last_name: "Chen",
+      bio: "Commercial photographer specializing in product and fashion photography for top brands worldwide.",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      location: "Los Angeles, CA"
+    }
+  },
+  {
+    id: "sample-3",
+    user_id: "sample-user-3",
+    specialties: ["Landscape", "Nature", "Travel"],
+    gear: ["Sony A1", "DJI Mavic 3"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "Emma",
+      last_name: "Williams",
+      bio: "Nature and landscape photographer documenting Earth's most beautiful places and wildlife.",
+      avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      location: "Denver, CO"
+    }
+  },
+  {
+    id: "sample-4",
+    user_id: "sample-user-4",
+    specialties: ["Wedding", "Engagement", "Family"],
+    gear: ["Canon R6 II", "85mm f/1.2"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "David",
+      last_name: "Martinez",
+      bio: "Passionate about capturing authentic emotions and creating timeless wedding memories for couples.",
+      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      location: "Miami, FL"
+    }
+  },
+  {
+    id: "sample-5",
+    user_id: "sample-user-5",
+    specialties: ["Portrait", "Headshot", "Corporate"],
+    gear: ["Sony A7R V", "Profoto B10"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "Jessica",
+      last_name: "Taylor",
+      bio: "Professional headshot and corporate portrait photographer helping individuals and businesses shine.",
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+      location: "Chicago, IL"
+    }
+  },
+  {
+    id: "sample-6",
+    user_id: "sample-user-6",
+    specialties: ["Sports", "Action", "Events"],
+    gear: ["Canon EOS R3", "400mm f/2.8"],
+    portfolio_images: [],
+    is_approved: true,
+    profiles: {
+      first_name: "James",
+      last_name: "Anderson",
+      bio: "Sports and action photographer capturing the intensity and emotion of athletic moments.",
+      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+      location: "Boston, MA"
+    }
+  }
+];
+
 const Photographers = () => {
   const [photographers, setPhotographers] = useState<PhotographerProfile[]>([]);
   const [filteredPhotographers, setFilteredPhotographers] = useState<PhotographerProfile[]>([]);
@@ -79,7 +173,8 @@ const Photographers = () => {
         })
       );
 
-      setPhotographers(photographersWithProfiles);
+      // Use sample data if no photographers found
+      setPhotographers(photographersWithProfiles.length > 0 ? photographersWithProfiles : samplePhotographers);
     } catch (error) {
       toast({
         title: "Error loading photographers",
