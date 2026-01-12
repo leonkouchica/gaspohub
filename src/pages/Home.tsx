@@ -505,6 +505,84 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Become a Photographer CTA */}
+      <section className="py-16">
+        <div className="container mx-auto px-6">
+          <Card className="overflow-hidden">
+            <div className="grid md:grid-cols-2">
+              <div className="p-8 md:p-12 flex flex-col justify-center">
+                <Badge className="w-fit mb-4" variant="secondary">For Photographers</Badge>
+                <h2 className="text-3xl font-bold mb-4">Share Your Talent with the World</h2>
+                <p className="text-muted-foreground mb-6">
+                  Join our community of professional photographers. Create your profile, 
+                  list your services, and start connecting with clients looking for your unique skills.
+                </p>
+                <ul className="space-y-2 mb-6 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span>Set your own prices and availability</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span>Showcase your portfolio to thousands of clients</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span>Receive bookings and manage your business</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span>Sell prints and digital products</span>
+                  </li>
+                </ul>
+                <Button asChild size="lg" className="w-fit">
+                  <Link to={user ? "/dashboard/onboarding" : "/auth"}>
+                    <Camera className="mr-2 h-5 w-5" />
+                    {user ? "Become a Photographer" : "Get Started"}
+                  </Link>
+                </Button>
+              </div>
+              <div className="hidden md:block bg-gradient-to-br from-primary/20 to-accent/20 p-8">
+                <div className="grid grid-cols-2 gap-4 h-full">
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] rounded-lg bg-muted overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400" 
+                        alt="Photography"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="aspect-square rounded-lg bg-muted overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400" 
+                        alt="Photography"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4 pt-8">
+                    <div className="aspect-square rounded-lg bg-muted overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400" 
+                        alt="Camera"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="aspect-[4/3] rounded-lg bg-muted overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400" 
+                        alt="Photography session"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
       {/* Call to Action */}
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6 text-center">
@@ -518,7 +596,7 @@ const Home = () => {
                 <Button asChild size="lg" variant="secondary">
                   <Link to="/auth">Sign Up Now</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 hover:bg-primary-foreground/10">
                   <Link to="/photographers">Browse Photographers</Link>
                 </Button>
               </>
@@ -527,7 +605,7 @@ const Home = () => {
                 <Button asChild size="lg" variant="secondary">
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 hover:bg-primary-foreground/10">
                   <Link to="/photographers">Find Photographers</Link>
                 </Button>
               </>
