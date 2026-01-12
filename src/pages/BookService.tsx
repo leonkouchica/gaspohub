@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, DollarSign, MapPin, Camera } from "lucide-react";
+import { CalendarIcon, Clock, DollarSign, MapPin, Camera, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,95 @@ interface PhotographerData {
   bio: string;
 }
 
+// Sample photographer data for demo booking
+const samplePhotographerData: Record<string, { photographer: PhotographerData; services: ServiceData[] }> = {
+  "sample-user-1": {
+    photographer: {
+      id: "sample-user-1",
+      first_name: "Sarah",
+      last_name: "Johnson",
+      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
+      location: "New York, NY",
+      bio: "Award-winning wedding and portrait photographer with 10+ years of experience."
+    },
+    services: [
+      { id: "s1", title: "Wedding Photography", description: "Full-day wedding coverage including ceremony, reception, and portraits", price: 2500, duration_hours: 8, photographer_id: "sample-user-1" },
+      { id: "s2", title: "Engagement Session", description: "1-2 hour session at location of your choice", price: 350, duration_hours: 2, photographer_id: "sample-user-1" },
+      { id: "s3", title: "Portrait Session", description: "Individual or family portrait session", price: 250, duration_hours: 1, photographer_id: "sample-user-1" }
+    ]
+  },
+  "sample-user-2": {
+    photographer: {
+      id: "sample-user-2",
+      first_name: "Michael",
+      last_name: "Chen",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      location: "Los Angeles, CA",
+      bio: "Commercial photographer specializing in product and fashion photography."
+    },
+    services: [
+      { id: "s4", title: "Product Photography", description: "Professional product shots for e-commerce and marketing", price: 500, duration_hours: 4, photographer_id: "sample-user-2" },
+      { id: "s5", title: "Fashion Shoot", description: "Full fashion photography session with styling consultation", price: 1500, duration_hours: 6, photographer_id: "sample-user-2" }
+    ]
+  },
+  "sample-user-3": {
+    photographer: {
+      id: "sample-user-3",
+      first_name: "Emma",
+      last_name: "Williams",
+      avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      location: "Denver, CO",
+      bio: "Nature and landscape photographer documenting Earth's most beautiful places."
+    },
+    services: [
+      { id: "s6", title: "Landscape Print", description: "High-quality landscape print with custom sizing", price: 200, duration_hours: 0, photographer_id: "sample-user-3" },
+      { id: "s7", title: "Photography Workshop", description: "Half-day landscape photography workshop", price: 300, duration_hours: 4, photographer_id: "sample-user-3" }
+    ]
+  },
+  "sample-user-4": {
+    photographer: {
+      id: "sample-user-4",
+      first_name: "David",
+      last_name: "Martinez",
+      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      location: "Miami, FL",
+      bio: "Passionate about capturing authentic emotions and creating timeless wedding memories."
+    },
+    services: [
+      { id: "s8", title: "Wedding Package", description: "Complete wedding day coverage", price: 3000, duration_hours: 10, photographer_id: "sample-user-4" },
+      { id: "s9", title: "Elopement Package", description: "Intimate ceremony coverage", price: 1200, duration_hours: 4, photographer_id: "sample-user-4" }
+    ]
+  },
+  "sample-user-5": {
+    photographer: {
+      id: "sample-user-5",
+      first_name: "Jessica",
+      last_name: "Taylor",
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+      location: "Chicago, IL",
+      bio: "Professional headshot and corporate portrait photographer."
+    },
+    services: [
+      { id: "s10", title: "Professional Headshot", description: "Studio headshot session with retouching", price: 200, duration_hours: 1, photographer_id: "sample-user-5" },
+      { id: "s11", title: "Corporate Team Photos", description: "On-site team photography session", price: 800, duration_hours: 3, photographer_id: "sample-user-5" }
+    ]
+  },
+  "sample-user-6": {
+    photographer: {
+      id: "sample-user-6",
+      first_name: "James",
+      last_name: "Anderson",
+      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+      location: "Boston, MA",
+      bio: "Sports and action photographer capturing the intensity of athletic moments."
+    },
+    services: [
+      { id: "s12", title: "Sports Event Coverage", description: "Full event coverage with action shots", price: 600, duration_hours: 4, photographer_id: "sample-user-6" },
+      { id: "s13", title: "Athlete Portfolio", description: "Action portfolio session for athletes", price: 400, duration_hours: 2, photographer_id: "sample-user-6" }
+    ]
+  }
+};
+
 const BookService = () => {
   const { photographerId, serviceId } = useParams<{ photographerId: string; serviceId?: string }>();
   const { user } = useAuth();
@@ -60,6 +149,8 @@ const BookService = () => {
   const [selectedService, setSelectedService] = useState<ServiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isSamplePhotographer, setIsSamplePhotographer] = useState(false);
+  const [demoBookingComplete, setDemoBookingComplete] = useState(false);
 
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
@@ -73,7 +164,26 @@ const BookService = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch photographer data
+      // Check if this is a sample photographer
+      if (photographerId && samplePhotographerData[photographerId]) {
+        const sampleData = samplePhotographerData[photographerId];
+        setPhotographer(sampleData.photographer);
+        setServices(sampleData.services);
+        setIsSamplePhotographer(true);
+
+        // If a specific service is selected, find it
+        if (serviceId) {
+          const specificService = sampleData.services.find(s => s.id === serviceId);
+          if (specificService) {
+            setService(specificService);
+            setSelectedService(specificService);
+          }
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Fetch real photographer data
       const { data: photographerData, error: photographerError } = await supabase
         .from('profiles')
         .select('*')
@@ -114,19 +224,33 @@ const BookService = () => {
   };
 
   const onSubmit = async (data: BookingForm) => {
-    if (!user) {
+    if (!selectedService) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to book a service",
+        title: "Service required",
+        description: "Please select a service to book",
         variant: "destructive",
       });
       return;
     }
 
-    if (!selectedService) {
+    // Handle demo booking for sample photographers
+    if (isSamplePhotographer) {
+      setSubmitting(true);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setDemoBookingComplete(true);
+      setSubmitting(false);
       toast({
-        title: "Service required",
-        description: "Please select a service to book",
+        title: "Demo Booking Created!",
+        description: `This is a demo booking for ${selectedService.title} on ${format(data.booking_date, "PPP")}. In a real scenario, this would create an actual booking.`,
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to book a service",
         variant: "destructive",
       });
       return;
@@ -231,8 +355,73 @@ const BookService = () => {
     );
   }
 
+  // Demo booking success screen
+  if (demoBookingComplete && isSamplePhotographer) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="pt-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Demo Booking Complete!</h2>
+            <p className="text-muted-foreground mb-6">
+              This was a demonstration of the booking flow. In a real scenario, your booking 
+              with <strong>{photographer.first_name} {photographer.last_name}</strong> for{" "}
+              <strong>{selectedService?.title}</strong> would be submitted and you'd receive 
+              a confirmation email.
+            </p>
+            
+            <div className="bg-muted/50 rounded-lg p-4 mb-6 text-left">
+              <h4 className="font-medium mb-3">What happens in a real booking:</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span>Your booking request is sent to the photographer</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span>You receive a confirmation email with booking details</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span>The photographer reviews and confirms your booking</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span>You can message the photographer to discuss details</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={() => navigate('/photographers')}>
+                Explore More Photographers
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setDemoBookingComplete(false);
+                form.reset();
+              }}>
+                Try Another Booking
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-6 py-8">
+      {isSamplePhotographer && (
+        <div className="mb-6 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            <strong>Demo Mode:</strong> This is a sample photographer. You can experience the full booking flow, 
+            but no real booking will be created. Sign up and connect with real photographers to make actual bookings!
+          </p>
+        </div>
+      )}
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Book Photography Service</h1>
         <p className="text-muted-foreground">
