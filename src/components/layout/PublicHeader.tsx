@@ -15,10 +15,10 @@ export const PublicHeader = () => {
 
   const navigation = [
     { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
     { name: "Photographers", href: "/photographers" },
     { name: "Services", href: "/services" },
     { name: "Shop", href: "/shop" },
-    { name: "About", href: "/about" },
   ];
 
   const isActive = (path: string) => {
