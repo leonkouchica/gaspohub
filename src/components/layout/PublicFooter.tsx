@@ -33,6 +33,9 @@ export const PublicFooter = () => {
               <Link to="/shop" className="block text-sm text-muted-foreground hover:text-primary">
                 Shop Products
               </Link>
+              <Link to="/about" className="block text-sm text-muted-foreground hover:text-primary">
+                About Us
+              </Link>
               <Link to="/auth" className="block text-sm text-muted-foreground hover:text-primary">
                 Join Now
               </Link>

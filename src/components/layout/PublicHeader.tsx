@@ -18,6 +18,7 @@ export const PublicHeader = () => {
     { name: "Photographers", href: "/photographers" },
     { name: "Services", href: "/services" },
     { name: "Shop", href: "/shop" },
+    { name: "About", href: "/about" },
   ];
 
   const isActive = (path: string) => {

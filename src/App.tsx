@@ -36,6 +36,7 @@ import Orders from "./pages/Orders";
 import PortfolioManagement from "./pages/PortfolioManagement";
 import Favorites from "./pages/Favorites";
 import Install from "./pages/Install";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="shop" element={<Shop />} />
                 <Route path="cart" element={<Cart />} />
                 <Route path="search" element={<Search />} />
+                <Route path="about" element={<About />} />
               </Route>
               
               {/* Install PWA Route */}
