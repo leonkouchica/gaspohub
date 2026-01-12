@@ -37,6 +37,10 @@ import PortfolioManagement from "./pages/PortfolioManagement";
 import Favorites from "./pages/Favorites";
 import Install from "./pages/Install";
 import About from "./pages/About";
+import HelpCenter from "./pages/HelpCenter";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +82,10 @@ const App = () => (
                 <Route path="cart" element={<Cart />} />
                 <Route path="search" element={<Search />} />
                 <Route path="about" element={<About />} />
+                <Route path="help" element={<HelpCenter />} />
+                <Route path="terms" element={<TermsOfService />} />
+                <Route path="privacy" element={<PrivacyPolicy />} />
+                <Route path="contact" element={<Contact />} />
               </Route>
               
               {/* Install PWA Route */}
