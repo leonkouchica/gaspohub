@@ -314,6 +314,27 @@ const Photographers = () => {
         keywords="professional photographers, wedding photographer, portrait photographer, event photographer, photography booking"
       />
       <Breadcrumbs />
+      
+      {/* Become a Photographer Banner */}
+      <Card className="mb-8 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <CardContent className="py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold">Are you a photographer?</h3>
+              <p className="text-sm text-muted-foreground">
+                Join our platform and start connecting with clients today.
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/dashboard/onboarding">
+                <Camera className="mr-2 h-4 w-4" />
+                Become a Photographer
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Professional Photographers</h1>
         <p className="text-muted-foreground">
