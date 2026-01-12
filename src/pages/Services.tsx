@@ -32,6 +32,112 @@ interface ServiceWithPhotographer {
   };
 }
 
+// Sample services data for demo purposes
+const sampleServices: ServiceWithPhotographer[] = [
+  {
+    id: "sample-service-1",
+    title: "Wedding Photography Package",
+    description: "Complete wedding day coverage including ceremony, reception, and portraits. Includes 500+ edited photos.",
+    price: 2500,
+    duration_hours: 8,
+    photographer_id: "sample-user-1",
+    profiles: {
+      first_name: "Sarah",
+      last_name: "Johnson",
+      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
+      location: "New York, NY"
+    },
+    photographer_profiles: {
+      specialties: ["Wedding", "Portrait", "Events"]
+    }
+  },
+  {
+    id: "sample-service-2",
+    title: "Professional Headshots",
+    description: "Studio headshot session perfect for LinkedIn, corporate use, or acting portfolios. Includes 10 retouched images.",
+    price: 250,
+    duration_hours: 1,
+    photographer_id: "sample-user-5",
+    profiles: {
+      first_name: "Jessica",
+      last_name: "Taylor",
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+      location: "Chicago, IL"
+    },
+    photographer_profiles: {
+      specialties: ["Portrait", "Headshot", "Corporate"]
+    }
+  },
+  {
+    id: "sample-service-3",
+    title: "Product Photography",
+    description: "High-quality product photos for e-commerce. Clean white background or lifestyle shots. Up to 20 products.",
+    price: 500,
+    duration_hours: 4,
+    photographer_id: "sample-user-2",
+    profiles: {
+      first_name: "Michael",
+      last_name: "Chen",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      location: "Los Angeles, CA"
+    },
+    photographer_profiles: {
+      specialties: ["Commercial", "Product", "Fashion"]
+    }
+  },
+  {
+    id: "sample-service-4",
+    title: "Engagement Photo Session",
+    description: "Romantic outdoor engagement session at your favorite location. Includes 50+ edited photos.",
+    price: 450,
+    duration_hours: 2,
+    photographer_id: "sample-user-4",
+    profiles: {
+      first_name: "David",
+      last_name: "Martinez",
+      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      location: "Miami, FL"
+    },
+    photographer_profiles: {
+      specialties: ["Wedding", "Engagement", "Family"]
+    }
+  },
+  {
+    id: "sample-service-5",
+    title: "Family Portrait Session",
+    description: "Capture beautiful family moments in-studio or at outdoor locations. Includes 30+ edited photos.",
+    price: 350,
+    duration_hours: 2,
+    photographer_id: "sample-user-4",
+    profiles: {
+      first_name: "David",
+      last_name: "Martinez",
+      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      location: "Miami, FL"
+    },
+    photographer_profiles: {
+      specialties: ["Wedding", "Engagement", "Family"]
+    }
+  },
+  {
+    id: "sample-service-6",
+    title: "Sports Event Coverage",
+    description: "Action-packed sports photography for games, tournaments, or athletic events. Full event coverage.",
+    price: 800,
+    duration_hours: 4,
+    photographer_id: "sample-user-6",
+    profiles: {
+      first_name: "James",
+      last_name: "Anderson",
+      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+      location: "Boston, MA"
+    },
+    photographer_profiles: {
+      specialties: ["Sports", "Action", "Events"]
+    }
+  }
+];
+
 const Services = () => {
   const [services, setServices] = useState<ServiceWithPhotographer[]>([]);
   const [filteredServices, setFilteredServices] = useState<ServiceWithPhotographer[]>([]);
@@ -87,7 +193,8 @@ const Services = () => {
         })
       );
 
-      setServices(servicesWithData);
+      // Use sample data if no services found
+      setServices(servicesWithData.length > 0 ? servicesWithData : sampleServices);
     } catch (error) {
       toast({
         title: "Error loading services",
@@ -98,6 +205,7 @@ const Services = () => {
       setLoading(false);
     }
   };
+
 
   const filterServices = () => {
     let filtered = services;
