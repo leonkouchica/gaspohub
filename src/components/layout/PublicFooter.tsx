@@ -57,10 +57,18 @@ export const PublicFooter = () => {
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Help Center</div>
-              <div className="text-sm text-muted-foreground">Terms of Service</div>
-              <div className="text-sm text-muted-foreground">Privacy Policy</div>
-              <div className="text-sm text-muted-foreground">Contact Us</div>
+              <Link to="/help" className="block text-sm text-muted-foreground hover:text-primary">
+                Help Center
+              </Link>
+              <Link to="/terms" className="block text-sm text-muted-foreground hover:text-primary">
+                Terms of Service
+              </Link>
+              <Link to="/privacy" className="block text-sm text-muted-foreground hover:text-primary">
+                Privacy Policy
+              </Link>
+              <Link to="/contact" className="block text-sm text-muted-foreground hover:text-primary">
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
