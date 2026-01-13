@@ -15,6 +15,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { SocialShare } from "@/components/SocialShare";
+import { 
+  samplePhotographers, 
+  sampleServices, 
+  sampleReviews,
+  getSamplePhotographerByUserId,
+  getSampleServicesByPhotographerId,
+  getSampleReviewsByPhotographerId 
+} from "@/data/sampleData";
 
 interface PhotographerData {
   photographer_profiles: {
@@ -55,188 +63,41 @@ interface Review {
   };
 }
 
-// Sample photographer data for demo
-const samplePhotographersData: Record<string, {
-  profile: PhotographerData;
-  services: Service[];
-  reviews: Review[];
-}> = {
-  "sample-user-1": {
+// Build sample photographers data from shared data
+const buildSamplePhotographerData = (userId: string) => {
+  const photographer = getSamplePhotographerByUserId(userId);
+  if (!photographer) return null;
+  
+  const services = getSampleServicesByPhotographerId(userId).map(s => ({
+    id: s.id,
+    title: s.title,
+    description: s.description,
+    price: s.price,
+    duration_hours: s.duration_hours,
+    is_active: s.is_active ?? true
+  }));
+  
+  const reviews = getSampleReviewsByPhotographerId(userId);
+  
+  return {
     profile: {
       photographer_profiles: {
-        id: "sample-1",
-        specialties: ["Wedding", "Portrait", "Events"],
-        gear: ["Canon EOS R5", "Sony A7 IV", "85mm f/1.4", "24-70mm f/2.8"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
-          "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800",
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800",
-          "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800"
-        ],
-        is_approved: true
+        id: photographer.id,
+        specialties: photographer.specialties,
+        gear: photographer.gear,
+        portfolio_images: photographer.portfolio_images,
+        is_approved: photographer.is_approved
       },
-      first_name: "Sarah",
-      last_name: "Johnson",
-      bio: "Award-winning wedding and portrait photographer with 10+ years of experience capturing life's most precious moments. I believe in creating timeless images that tell your unique story.",
-      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-      location: "New York, NY",
-      phone: "+1 (555) 123-4567"
+      first_name: photographer.profiles.first_name,
+      last_name: photographer.profiles.last_name,
+      bio: photographer.profiles.bio,
+      avatar_url: photographer.profiles.avatar_url,
+      location: photographer.profiles.location,
+      phone: photographer.profiles.phone || ""
     },
-    services: [
-      { id: "s1", title: "Wedding Photography", description: "Full-day wedding coverage including ceremony, reception, and portraits", price: 2500, duration_hours: 8, is_active: true },
-      { id: "s2", title: "Engagement Session", description: "1-2 hour session at location of your choice", price: 350, duration_hours: 2, is_active: true },
-      { id: "s3", title: "Portrait Session", description: "Individual or family portrait session", price: 250, duration_hours: 1, is_active: true }
-    ],
-    reviews: [
-      { id: "r1", rating: 5, comment: "Sarah captured our wedding beautifully! Every photo tells a story.", created_at: "2024-12-15T10:00:00Z", reviewer_id: "rev1", is_public: true, reviewer_profile: { first_name: "Emily", last_name: "Davis", avatar_url: "" } },
-      { id: "r2", rating: 5, comment: "Professional, creative, and so easy to work with. Highly recommend!", created_at: "2024-11-20T10:00:00Z", reviewer_id: "rev2", is_public: true, reviewer_profile: { first_name: "Michael", last_name: "Brown", avatar_url: "" } }
-    ]
-  },
-  "sample-user-2": {
-    profile: {
-      photographer_profiles: {
-        id: "sample-2",
-        specialties: ["Commercial", "Product", "Fashion"],
-        gear: ["Nikon Z9", "Phase One", "Profoto Lighting"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800",
-          "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"
-        ],
-        is_approved: true
-      },
-      first_name: "Michael",
-      last_name: "Chen",
-      bio: "Commercial photographer specializing in product and fashion photography for top brands worldwide. Creating images that sell.",
-      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      location: "Los Angeles, CA",
-      phone: "+1 (555) 234-5678"
-    },
-    services: [
-      { id: "s4", title: "Product Photography", description: "Professional product shots for e-commerce and marketing", price: 500, duration_hours: 4, is_active: true },
-      { id: "s5", title: "Fashion Shoot", description: "Full fashion photography session with styling consultation", price: 1500, duration_hours: 6, is_active: true }
-    ],
-    reviews: [
-      { id: "r3", rating: 5, comment: "Michael's product photos increased our conversion rate by 40%!", created_at: "2024-12-01T10:00:00Z", reviewer_id: "rev3", is_public: true, reviewer_profile: { first_name: "Lisa", last_name: "Wang", avatar_url: "" } }
-    ]
-  },
-  "sample-user-3": {
-    profile: {
-      photographer_profiles: {
-        id: "sample-3",
-        specialties: ["Landscape", "Nature", "Travel"],
-        gear: ["Sony A1", "DJI Mavic 3", "16-35mm f/2.8"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
-          "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800",
-          "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800"
-        ],
-        is_approved: true
-      },
-      first_name: "Emma",
-      last_name: "Williams",
-      bio: "Nature and landscape photographer documenting Earth's most beautiful places and wildlife. Available for travel assignments worldwide.",
-      avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      location: "Denver, CO",
-      phone: "+1 (555) 345-6789"
-    },
-    services: [
-      { id: "s6", title: "Landscape Print", description: "High-quality landscape print with custom sizing", price: 200, duration_hours: 0, is_active: true },
-      { id: "s7", title: "Photography Workshop", description: "Half-day landscape photography workshop", price: 300, duration_hours: 4, is_active: true }
-    ],
-    reviews: [
-      { id: "r4", rating: 5, comment: "Emma's workshop was incredible! Learned so much about composition.", created_at: "2024-11-15T10:00:00Z", reviewer_id: "rev4", is_public: true, reviewer_profile: { first_name: "John", last_name: "Smith", avatar_url: "" } }
-    ]
-  },
-  "sample-user-4": {
-    profile: {
-      photographer_profiles: {
-        id: "sample-4",
-        specialties: ["Wedding", "Engagement", "Family"],
-        gear: ["Canon R6 II", "85mm f/1.2", "35mm f/1.4"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
-          "https://images.unsplash.com/photo-1529634597503-139d3726fed5?w=800",
-          "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800",
-          "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800"
-        ],
-        is_approved: true
-      },
-      first_name: "David",
-      last_name: "Martinez",
-      bio: "Passionate about capturing authentic emotions and creating timeless wedding memories for couples.",
-      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      location: "Miami, FL",
-      phone: "+1 (555) 456-7890"
-    },
-    services: [
-      { id: "s8", title: "Wedding Package", description: "Complete wedding day coverage", price: 3000, duration_hours: 10, is_active: true },
-      { id: "s9", title: "Elopement Package", description: "Intimate ceremony coverage", price: 1200, duration_hours: 4, is_active: true }
-    ],
-    reviews: [
-      { id: "r5", rating: 5, comment: "David made us feel so comfortable. Our wedding photos are perfect!", created_at: "2024-12-10T10:00:00Z", reviewer_id: "rev5", is_public: true, reviewer_profile: { first_name: "Maria", last_name: "Garcia", avatar_url: "" } }
-    ]
-  },
-  "sample-user-5": {
-    profile: {
-      photographer_profiles: {
-        id: "sample-5",
-        specialties: ["Portrait", "Headshot", "Corporate"],
-        gear: ["Sony A7R V", "Profoto B10", "70-200mm f/2.8"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
-          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800",
-          "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800",
-          "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800"
-        ],
-        is_approved: true
-      },
-      first_name: "Jessica",
-      last_name: "Taylor",
-      bio: "Professional headshot and corporate portrait photographer helping individuals and businesses shine.",
-      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
-      location: "Chicago, IL",
-      phone: "+1 (555) 567-8901"
-    },
-    services: [
-      { id: "s10", title: "Professional Headshot", description: "Studio headshot session with retouching", price: 200, duration_hours: 1, is_active: true },
-      { id: "s11", title: "Corporate Team Photos", description: "On-site team photography session", price: 800, duration_hours: 3, is_active: true }
-    ],
-    reviews: [
-      { id: "r6", rating: 5, comment: "Got my LinkedIn photo done. Already received compliments!", created_at: "2024-11-25T10:00:00Z", reviewer_id: "rev6", is_public: true, reviewer_profile: { first_name: "Robert", last_name: "Johnson", avatar_url: "" } }
-    ]
-  },
-  "sample-user-6": {
-    profile: {
-      photographer_profiles: {
-        id: "sample-6",
-        specialties: ["Sports", "Action", "Events"],
-        gear: ["Canon EOS R3", "400mm f/2.8", "70-200mm f/2.8"],
-        portfolio_images: [
-          "https://images.unsplash.com/photo-1461896836934- voices-photographer?w=800",
-          "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800",
-          "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
-          "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800"
-        ],
-        is_approved: true
-      },
-      first_name: "James",
-      last_name: "Anderson",
-      bio: "Sports and action photographer capturing the intensity and emotion of athletic moments.",
-      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      location: "Boston, MA",
-      phone: "+1 (555) 678-9012"
-    },
-    services: [
-      { id: "s12", title: "Sports Event Coverage", description: "Full event coverage with action shots", price: 600, duration_hours: 4, is_active: true },
-      { id: "s13", title: "Athlete Portfolio", description: "Action portfolio session for athletes", price: 400, duration_hours: 2, is_active: true }
-    ],
-    reviews: [
-      { id: "r7", rating: 5, comment: "James captured amazing shots of my marathon. True professional!", created_at: "2024-12-05T10:00:00Z", reviewer_id: "rev7", is_public: true, reviewer_profile: { first_name: "Tom", last_name: "Wilson", avatar_url: "" } }
-    ]
-  }
+    services,
+    reviews
+  };
 };
 
 const PhotographerProfile = () => {
@@ -259,8 +120,8 @@ const PhotographerProfile = () => {
   const fetchPhotographerData = async () => {
     try {
       // Check if this is a sample photographer first
-      if (userId && samplePhotographersData[userId]) {
-        const sampleData = samplePhotographersData[userId];
+      const sampleData = userId ? buildSamplePhotographerData(userId) : null;
+      if (sampleData) {
         setPhotographer(sampleData.profile);
         setServices(sampleData.services);
         setReviews(sampleData.reviews);
