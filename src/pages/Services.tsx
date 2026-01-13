@@ -14,6 +14,7 @@ import { SEO } from "@/components/SEO";
 import { Search, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sampleServices as sharedSampleServices } from "@/data/sampleData";
+import { AdvertBanner } from "@/components/AdvertBanner";
 
 interface ServiceWithPhotographer {
   id: string;
@@ -269,6 +270,9 @@ const Services = () => {
           ))}
         </div>
       )}
+
+      {/* Advertisement Banner */}
+      <AdvertBanner className="mt-12" />
       </div>
     </>
   );

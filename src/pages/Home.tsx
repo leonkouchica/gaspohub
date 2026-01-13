@@ -10,6 +10,7 @@ import { Camera, Users, ShoppingBag, Star, Search, ArrowRight, MapPin } from "lu
 import { useAuth } from "@/hooks/useAuth";
 import { SEO } from "@/components/SEO";
 import { samplePhotographers, sampleServices } from "@/data/sampleData";
+import { AdvertBanner } from "@/components/AdvertBanner";
 
 interface FeaturedPhotographer {
   id: string;
@@ -464,6 +465,13 @@ const Home = () => {
               </>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* Advertisement Banner */}
+      <section className="py-8">
+        <div className="container mx-auto px-6">
+          <AdvertBanner />
         </div>
       </section>
     </div>
