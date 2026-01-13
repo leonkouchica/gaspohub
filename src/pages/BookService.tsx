@@ -20,6 +20,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
+import { 
+  getSamplePhotographerByUserId,
+  getSampleServicesByPhotographerId 
+} from "@/data/sampleData";
 
 const bookingSchema = z.object({
   booking_date: z.date({
@@ -48,93 +52,31 @@ interface PhotographerData {
   bio: string;
 }
 
-// Sample photographer data for demo booking
-const samplePhotographerData: Record<string, { photographer: PhotographerData; services: ServiceData[] }> = {
-  "sample-user-1": {
+// Build sample photographer data from shared data
+const buildSamplePhotographerData = (userId: string) => {
+  const photographer = getSamplePhotographerByUserId(userId);
+  if (!photographer) return null;
+  
+  const services = getSampleServicesByPhotographerId(userId).map(s => ({
+    id: s.id,
+    title: s.title,
+    description: s.description,
+    price: s.price,
+    duration_hours: s.duration_hours,
+    photographer_id: s.photographer_id
+  }));
+  
+  return {
     photographer: {
-      id: "sample-user-1",
-      first_name: "Sarah",
-      last_name: "Johnson",
-      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-      location: "New York, NY",
-      bio: "Award-winning wedding and portrait photographer with 10+ years of experience."
+      id: photographer.user_id,
+      first_name: photographer.profiles.first_name,
+      last_name: photographer.profiles.last_name,
+      avatar_url: photographer.profiles.avatar_url,
+      location: photographer.profiles.location,
+      bio: photographer.profiles.bio
     },
-    services: [
-      { id: "s1", title: "Wedding Photography", description: "Full-day wedding coverage including ceremony, reception, and portraits", price: 2500, duration_hours: 8, photographer_id: "sample-user-1" },
-      { id: "s2", title: "Engagement Session", description: "1-2 hour session at location of your choice", price: 350, duration_hours: 2, photographer_id: "sample-user-1" },
-      { id: "s3", title: "Portrait Session", description: "Individual or family portrait session", price: 250, duration_hours: 1, photographer_id: "sample-user-1" }
-    ]
-  },
-  "sample-user-2": {
-    photographer: {
-      id: "sample-user-2",
-      first_name: "Michael",
-      last_name: "Chen",
-      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      location: "Los Angeles, CA",
-      bio: "Commercial photographer specializing in product and fashion photography."
-    },
-    services: [
-      { id: "s4", title: "Product Photography", description: "Professional product shots for e-commerce and marketing", price: 500, duration_hours: 4, photographer_id: "sample-user-2" },
-      { id: "s5", title: "Fashion Shoot", description: "Full fashion photography session with styling consultation", price: 1500, duration_hours: 6, photographer_id: "sample-user-2" }
-    ]
-  },
-  "sample-user-3": {
-    photographer: {
-      id: "sample-user-3",
-      first_name: "Emma",
-      last_name: "Williams",
-      avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      location: "Denver, CO",
-      bio: "Nature and landscape photographer documenting Earth's most beautiful places."
-    },
-    services: [
-      { id: "s6", title: "Landscape Print", description: "High-quality landscape print with custom sizing", price: 200, duration_hours: 0, photographer_id: "sample-user-3" },
-      { id: "s7", title: "Photography Workshop", description: "Half-day landscape photography workshop", price: 300, duration_hours: 4, photographer_id: "sample-user-3" }
-    ]
-  },
-  "sample-user-4": {
-    photographer: {
-      id: "sample-user-4",
-      first_name: "David",
-      last_name: "Martinez",
-      avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      location: "Miami, FL",
-      bio: "Passionate about capturing authentic emotions and creating timeless wedding memories."
-    },
-    services: [
-      { id: "s8", title: "Wedding Package", description: "Complete wedding day coverage", price: 3000, duration_hours: 10, photographer_id: "sample-user-4" },
-      { id: "s9", title: "Elopement Package", description: "Intimate ceremony coverage", price: 1200, duration_hours: 4, photographer_id: "sample-user-4" }
-    ]
-  },
-  "sample-user-5": {
-    photographer: {
-      id: "sample-user-5",
-      first_name: "Jessica",
-      last_name: "Taylor",
-      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
-      location: "Chicago, IL",
-      bio: "Professional headshot and corporate portrait photographer."
-    },
-    services: [
-      { id: "s10", title: "Professional Headshot", description: "Studio headshot session with retouching", price: 200, duration_hours: 1, photographer_id: "sample-user-5" },
-      { id: "s11", title: "Corporate Team Photos", description: "On-site team photography session", price: 800, duration_hours: 3, photographer_id: "sample-user-5" }
-    ]
-  },
-  "sample-user-6": {
-    photographer: {
-      id: "sample-user-6",
-      first_name: "James",
-      last_name: "Anderson",
-      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      location: "Boston, MA",
-      bio: "Sports and action photographer capturing the intensity of athletic moments."
-    },
-    services: [
-      { id: "s12", title: "Sports Event Coverage", description: "Full event coverage with action shots", price: 600, duration_hours: 4, photographer_id: "sample-user-6" },
-      { id: "s13", title: "Athlete Portfolio", description: "Action portfolio session for athletes", price: 400, duration_hours: 2, photographer_id: "sample-user-6" }
-    ]
-  }
+    services
+  };
 };
 
 const BookService = () => {
@@ -165,8 +107,8 @@ const BookService = () => {
   const fetchData = async () => {
     try {
       // Check if this is a sample photographer
-      if (photographerId && samplePhotographerData[photographerId]) {
-        const sampleData = samplePhotographerData[photographerId];
+      const sampleData = photographerId ? buildSamplePhotographerData(photographerId) : null;
+      if (sampleData) {
         setPhotographer(sampleData.photographer);
         setServices(sampleData.services);
         setIsSamplePhotographer(true);
