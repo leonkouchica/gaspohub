@@ -14,6 +14,7 @@ import { Camera, Search, Filter, SortAsc } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { samplePhotographers as sharedSamplePhotographers } from "@/data/sampleData";
+import { AdvertBanner } from "@/components/AdvertBanner";
 
 interface PhotographerProfile {
   id: string;
@@ -381,6 +382,9 @@ const Photographers = () => {
           ))}
         </div>
       )}
+
+      {/* Advertisement Banner */}
+      <AdvertBanner className="mt-12" />
     </div>
   );
 };
