@@ -375,9 +375,9 @@ const PhotographerBookings = () => {
           const earnings = calculateEarnings(booking);
           const isPast = isBefore(new Date(booking.booking_date), startOfDay(new Date()));
           const canSubmitEvidence = 
-            booking.status === 'confirmed' && 
+            (booking.status === 'accepted' || booking.status === 'in_progress') && 
             isPast && 
-            booking.payment_status === 'paid' &&
+            (booking.payment_status === 'escrowed' || booking.payment_status === 'partial_paid') &&
             !booking.evidence_submitted_at;
           const evidenceSubmitted = !!booking.evidence_submitted_at;
           const awaitingFinalPayout = 
