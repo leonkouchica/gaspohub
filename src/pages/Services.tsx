@@ -272,7 +272,7 @@ const Services = () => {
       )}
 
       {/* Advertisement Banner */}
-      <AdvertBanner className="mt-12" />
+      <AdvertBanner page="services" className="mt-12" />
       </div>
     </>
   );
