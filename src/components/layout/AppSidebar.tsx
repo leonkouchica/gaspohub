@@ -16,7 +16,9 @@ import {
   DollarSign,
   Bell,
   Image as ImageIcon,
-  Heart
+  Heart,
+  Briefcase,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
@@ -51,7 +53,8 @@ const photographerNavigationItems = [
   { title: "Portfolio", url: "/dashboard/portfolio", icon: ImageIcon },
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
-  { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
+  { title: "Client Bookings", url: "/dashboard/bookings", icon: Calendar },
+  { title: "My Jobs", url: "/dashboard/photographer-bookings", icon: Briefcase },
   { title: "Availability", url: "/dashboard/availability", icon: Clock },
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
@@ -60,7 +63,7 @@ const photographerNavigationItems = [
   { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/dashboard/profile", icon: User },
-  { title: "Payouts", url: "/dashboard/payouts", icon: DollarSign },
+  { title: "Payouts", url: "/dashboard/payouts", icon: Wallet },
   { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
 ];
 

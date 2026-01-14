@@ -25,6 +25,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Availability from "./pages/Availability";
 import PhotographerOnboarding from "./pages/PhotographerOnboarding";
 import PhotographerAnalytics from "./pages/PhotographerAnalytics";
+import PhotographerBookings from "./pages/PhotographerBookings";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
@@ -113,6 +114,7 @@ const App = () => (
                 <Route path="availability" element={<Availability />} />
                 <Route path="onboarding" element={<PhotographerOnboarding />} />
                 <Route path="analytics" element={<PhotographerAnalytics />} />
+                <Route path="photographer-bookings" element={<PhotographerBookings />} />
                 <Route path="admin" element={<Admin />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="download" element={<DigitalDownload />} />
