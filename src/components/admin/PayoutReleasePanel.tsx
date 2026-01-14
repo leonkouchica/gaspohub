@@ -81,7 +81,7 @@ export const PayoutReleasePanel = () => {
           services(title)
         `)
         .eq('status', 'completed')
-        .eq('payment_status', 'paid')
+        .in('payment_status', ['escrowed', 'partial_paid'])
         .eq('final_payment_released', false)
         .not('evidence_urls', 'is', null)
         .order('evidence_submitted_at', { ascending: true });
@@ -99,7 +99,7 @@ export const PayoutReleasePanel = () => {
         .from('payouts')
         .select('booking_id, amount')
         .in('booking_id', bookingIds)
-        .eq('payout_type', 'final_release')
+        .eq('payout_type', 'final')
         .eq('status', 'pending');
 
       // Get profiles

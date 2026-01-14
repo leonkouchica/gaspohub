@@ -119,8 +119,8 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
-        payment_status: 'paid',
-        status: 'confirmed',
+        payment_status: 'escrowed',
+        status: 'accepted',
         initial_payment_released: true,
         final_payment_released: false,
         commission_rate: commissionRate,
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
         photographer_id: booking.photographer_id,
         booking_id: bookingId,
         amount: initialRelease,
-        payout_type: 'initial_release',
+        payout_type: 'initial',
         status: 'completed',
         payment_method: gateway,
         transaction_reference: transactionId,
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
         photographer_id: booking.photographer_id,
         booking_id: bookingId,
         amount: finalRelease,
-        payout_type: 'final_release',
+        payout_type: 'final',
         status: 'pending',
         notes: `Final release pending job completion. Held: $${heldAmount}, Commission: $${commissionAmount}`
       });
