@@ -471,7 +471,7 @@ const Home = () => {
       {/* Advertisement Banner */}
       <section className="py-8">
         <div className="container mx-auto px-6">
-          <AdvertBanner />
+          <AdvertBanner page="home" />
         </div>
       </section>
     </div>

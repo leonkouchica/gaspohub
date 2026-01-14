@@ -384,7 +384,7 @@ const Photographers = () => {
       )}
 
       {/* Advertisement Banner */}
-      <AdvertBanner className="mt-12" />
+      <AdvertBanner page="photographers" className="mt-12" />
     </div>
   );
 };

@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      advertisement_banners: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_pages: string[] | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          link_text: string | null
+          link_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_pages?: string[] | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_pages?: string[] | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booking_date: string
