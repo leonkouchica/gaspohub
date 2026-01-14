@@ -88,6 +88,9 @@ export type Database = {
       }
       bookings: {
         Row: {
+          admin_review_notes: string | null
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
           booking_date: string
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -95,6 +98,9 @@ export type Database = {
           client_id: string
           commission_rate: number | null
           created_at: string | null
+          evidence_notes: string | null
+          evidence_submitted_at: string | null
+          evidence_urls: string[] | null
           final_payment_released: boolean | null
           id: string
           initial_payment_released: boolean | null
@@ -110,6 +116,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          admin_review_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           booking_date: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -117,6 +126,9 @@ export type Database = {
           client_id: string
           commission_rate?: number | null
           created_at?: string | null
+          evidence_notes?: string | null
+          evidence_submitted_at?: string | null
+          evidence_urls?: string[] | null
           final_payment_released?: boolean | null
           id?: string
           initial_payment_released?: boolean | null
@@ -132,6 +144,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          admin_review_notes?: string | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
           booking_date?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -139,6 +154,9 @@ export type Database = {
           client_id?: string
           commission_rate?: number | null
           created_at?: string | null
+          evidence_notes?: string | null
+          evidence_submitted_at?: string | null
+          evidence_urls?: string[] | null
           final_payment_released?: boolean | null
           id?: string
           initial_payment_released?: boolean | null

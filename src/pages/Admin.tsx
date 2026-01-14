@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image, Wallet } from "lucide-react";
 import { DisputeManagement } from "@/components/admin/DisputeManagement";
 import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySettings";
 import { EmailSettings } from "@/components/admin/EmailSettings";
 import { AdvertisementSettings } from "@/components/admin/AdvertisementSettings";
+import { PayoutReleasePanel } from "@/components/admin/PayoutReleasePanel";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { createNotification } from "@/lib/notifications";
@@ -971,6 +972,10 @@ const Admin = () => {
             <Image className="h-4 w-4" />
             Ads
           </TabsTrigger>
+          <TabsTrigger value="payouts" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Payouts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -1829,6 +1834,10 @@ const Admin = () => {
 
         <TabsContent value="advertisements">
           <AdvertisementSettings />
+        </TabsContent>
+
+        <TabsContent value="payouts">
+          <PayoutReleasePanel />
         </TabsContent>
       </Tabs>
     </div>
