@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       .from('payouts')
       .select('*')
       .eq('booking_id', bookingId)
-      .eq('payout_type', 'final_release')
+      .eq('payout_type', 'final')
       .eq('status', 'pending')
       .single();
 
