@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image, Wallet } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image, Wallet, RefreshCw } from "lucide-react";
 import { DisputeManagement } from "@/components/admin/DisputeManagement";
+import { RefundManagement } from "@/components/admin/RefundManagement";
 import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySettings";
 import { EmailSettings } from "@/components/admin/EmailSettings";
 import { AdvertisementSettings } from "@/components/admin/AdvertisementSettings";
@@ -968,6 +969,10 @@ const Admin = () => {
             <AlertTriangle className="h-4 w-4" />
             Disputes
           </TabsTrigger>
+          <TabsTrigger value="refunds" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refunds
+          </TabsTrigger>
           <TabsTrigger value="advertisements" className="flex items-center gap-2">
             <Image className="h-4 w-4" />
             Ads
@@ -1830,6 +1835,10 @@ const Admin = () => {
 
         <TabsContent value="disputes">
           <DisputeManagement />
+        </TabsContent>
+
+        <TabsContent value="refunds">
+          <RefundManagement />
         </TabsContent>
 
         <TabsContent value="advertisements">
