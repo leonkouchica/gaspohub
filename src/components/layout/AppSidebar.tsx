@@ -75,6 +75,12 @@ const adminNavigationItems = [
   { title: "Orders", url: "/dashboard/admin?tab=orders", icon: ShoppingBag },
   { title: "Products", url: "/dashboard/admin?tab=products", icon: Package },
   { title: "Reviews", url: "/dashboard/admin?tab=reviews", icon: MessageSquare },
+  { title: "Refunds", url: "/dashboard/admin?tab=refunds", icon: DollarSign },
+  { title: "Payouts", url: "/dashboard/admin?tab=payouts", icon: Wallet },
+  { title: "Disputes", url: "/dashboard/admin?tab=disputes", icon: Shield },
+  { title: "Email Settings", url: "/dashboard/admin?tab=email", icon: MessageSquare },
+  { title: "Ad Banners", url: "/dashboard/admin?tab=ads", icon: ImageIcon },
+  { title: "Payment Gateway", url: "/dashboard/admin?tab=payment-gateway", icon: CreditCard },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
 ];
 
