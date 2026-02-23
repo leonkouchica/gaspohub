@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,26 +49,66 @@ const Messages = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const bookingId = searchParams.get('booking');
+
+  // Auto-scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }, []);
+
+  // Fetch a single profile if missing
+  const ensureProfile = useCallback(async (userId: string) => {
+    if (profiles.has(userId)) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url')
+      .eq('id', userId)
+      .single();
+    if (data) {
+      setProfiles((prev) => {
+        const next = new Map(prev);
+        next.set(data.id, data);
+        return next;
+      });
+    }
+  }, [profiles]);
 
   useEffect(() => {
     if (user) {
       fetchMessages();
-      
+
       const channel = supabase
-        .channel('messages-changes')
+        .channel('messages-realtime')
         .on(
           'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages'
-          },
+          { event: 'INSERT', schema: 'public', table: 'messages' },
           (payload) => {
-            const message = payload.new as Message;
-            if (message.sender_id === user.id || message.recipient_id === user.id) {
-              fetchMessages();
+            const msg = payload.new as Message;
+            if (msg.sender_id === user.id || msg.recipient_id === user.id) {
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === msg.id)) return prev;
+                return [...prev, msg];
+              });
+              // Ensure we have the profile for the other party
+              const otherId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
+              ensureProfile(otherId);
+              scrollToBottom();
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'messages' },
+          (payload) => {
+            const msg = payload.new as Message;
+            if (msg.sender_id === user.id || msg.recipient_id === user.id) {
+              setMessages((prev) =>
+                prev.map((m) => (m.id === msg.id ? msg : m))
+              );
             }
           }
         )
@@ -82,7 +122,7 @@ const Messages = () => {
 
   const fetchMessages = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -94,14 +134,12 @@ const Messages = () => {
 
       setMessages(data || []);
 
-      // Get unique user IDs
       const userIds = new Set<string>();
       (data || []).forEach((msg) => {
         userIds.add(msg.sender_id);
         userIds.add(msg.recipient_id);
       });
 
-      // Fetch profiles for all users
       if (userIds.size > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
@@ -131,7 +169,7 @@ const Messages = () => {
 
     messages.forEach((msg) => {
       const partnerId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
-      
+
       if (!conversationMap.has(partnerId)) {
         conversationMap.set(partnerId, {
           partnerId,
@@ -145,7 +183,7 @@ const Messages = () => {
       const conv = conversationMap.get(partnerId)!;
       conv.messages.push(msg);
       conv.lastMessage = msg;
-      
+
       if (!msg.is_read && msg.recipient_id === user.id) {
         conv.unreadCount++;
       }
@@ -158,9 +196,16 @@ const Messages = () => {
 
   const selectedConv = conversations.find((c) => c.partnerId === selectedConversation);
 
+  // Scroll to bottom when conversation changes or messages update
+  useEffect(() => {
+    if (selectedConv) {
+      scrollToBottom();
+    }
+  }, [selectedConv?.messages.length, selectedConversation]);
+
   const markAsRead = async (messageIds: string[]) => {
     if (!user || messageIds.length === 0) return;
-    
+
     await supabase
       .from('messages')
       .update({ is_read: true })
@@ -176,7 +221,7 @@ const Messages = () => {
 
   const handleSelectConversation = (partnerId: string) => {
     setSelectedConversation(partnerId);
-    
+
     const conv = conversations.find((c) => c.partnerId === partnerId);
     if (conv) {
       const unreadIds = conv.messages
@@ -204,11 +249,7 @@ const Messages = () => {
       if (error) throw error;
 
       setNewMessage("");
-      fetchMessages();
-      
-      toast({
-        title: "Message sent!",
-      });
+      // Real-time subscription will append the message automatically
     } catch (error) {
       toast({
         title: "Failed to send message",
@@ -231,171 +272,172 @@ const Messages = () => {
 
   return (
     <>
-      <SEO 
+      <SEO
         title="Messages"
         description="Communicate with photographers and clients about your bookings."
       />
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Messages</h1>
-        <p className="text-muted-foreground">
-          Communicate with photographers and clients
-        </p>
-      </div>
+          <h1 className="text-3xl font-bold mb-2">Messages</h1>
+          <p className="text-muted-foreground">
+            Communicate with photographers and clients
+          </p>
+        </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-280px)] min-h-[500px]">
-        {/* Conversations List */}
-        <Card className={`lg:col-span-1 ${selectedConversation ? 'hidden lg:block' : ''}`}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MessageSquare className="h-5 w-5" />
-              Conversations
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {conversations.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-muted-foreground">No conversations yet</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-[calc(100vh-380px)] min-h-[400px]">
-                <div className="space-y-1">
-                  {conversations.map((conv) => (
-                    <div
-                      key={conv.partnerId}
-                      onClick={() => handleSelectConversation(conv.partnerId)}
-                      className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b last:border-b-0 ${
-                        selectedConversation === conv.partnerId ? 'bg-muted' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={conv.partner?.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {conv.partner?.first_name?.[0]}
-                            {conv.partner?.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-sm font-medium truncate">
-                              {conv.partner?.first_name || 'Unknown'} {conv.partner?.last_name || ''}
-                            </p>
-                            {conv.unreadCount > 0 && (
-                              <Badge variant="destructive" className="ml-2">
-                                {conv.unreadCount}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {conv.lastMessage.content}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(conv.lastMessage.created_at), "MMM d, h:mm a")}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+        <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-280px)] min-h-[500px]">
+          {/* Conversations List */}
+          <Card className={`lg:col-span-1 ${selectedConversation ? 'hidden lg:block' : ''}`}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MessageSquare className="h-5 w-5" />
+                Conversations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {conversations.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground">No conversations yet</p>
                 </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Chat Area */}
-        <Card className={`lg:col-span-2 flex flex-col ${!selectedConversation ? 'hidden lg:flex' : ''}`}>
-          {selectedConv ? (
-            <>
-              <CardHeader className="pb-3 border-b flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="lg:hidden"
-                    onClick={() => setSelectedConversation(null)}
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                  <Avatar>
-                    <AvatarImage src={selectedConv.partner?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {selectedConv.partner?.first_name?.[0]}
-                      {selectedConv.partner?.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {selectedConv.partner?.first_name || 'Unknown'} {selectedConv.partner?.last_name || ''}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedConv.messages.length} messages
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {selectedConv.messages.map((msg) => {
-                    const isMe = msg.sender_id === user?.id;
-                    return (
+              ) : (
+                <ScrollArea className="h-[calc(100vh-380px)] min-h-[400px]">
+                  <div className="space-y-1">
+                    {conversations.map((conv) => (
                       <div
-                        key={msg.id}
-                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        key={conv.partnerId}
+                        onClick={() => handleSelectConversation(conv.partnerId)}
+                        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b last:border-b-0 ${
+                          selectedConversation === conv.partnerId ? 'bg-muted' : ''
+                        }`}
                       >
-                        <div
-                          className={`max-w-[70%] p-3 rounded-lg ${
-                            isMe
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                          <p className={`text-xs mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                            {format(new Date(msg.created_at), "h:mm a")}
-                          </p>
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={conv.partner?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {conv.partner?.first_name?.[0]}
+                              {conv.partner?.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium truncate">
+                                {conv.partner?.first_name || 'Unknown'} {conv.partner?.last_name || ''}
+                              </p>
+                              {conv.unreadCount > 0 && (
+                                <Badge variant="destructive" className="ml-2">
+                                  {conv.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {conv.lastMessage.content}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {format(new Date(conv.lastMessage.created_at), "MMM d, h:mm a")}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-
-              <div className="p-4 border-t flex-shrink-0">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Textarea
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    rows={1}
-                    className="resize-none min-h-[40px]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                      }
-                    }}
-                  />
-                  <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <CardContent className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
-                <p className="text-muted-foreground">
-                  Choose a conversation from the list to start messaging
-                </p>
-              </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </CardContent>
-          )}
-        </Card>
-      </div>
+          </Card>
+
+          {/* Chat Area */}
+          <Card className={`lg:col-span-2 flex flex-col ${!selectedConversation ? 'hidden lg:flex' : ''}`}>
+            {selectedConv ? (
+              <>
+                <CardHeader className="pb-3 border-b flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="lg:hidden"
+                      onClick={() => setSelectedConversation(null)}
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <Avatar>
+                      <AvatarImage src={selectedConv.partner?.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {selectedConv.partner?.first_name?.[0]}
+                        {selectedConv.partner?.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {selectedConv.partner?.first_name || 'Unknown'} {selectedConv.partner?.last_name || ''}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedConv.messages.length} messages
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {selectedConv.messages.map((msg) => {
+                      const isMe = msg.sender_id === user?.id;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[70%] p-3 rounded-lg ${
+                              isMe
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className={`text-xs mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                              {format(new Date(msg.created_at), "h:mm a")}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t flex-shrink-0">
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <Textarea
+                      placeholder="Type a message..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      rows={1}
+                      className="resize-none min-h-[40px]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e);
+                        }
+                      }}
+                    />
+                    <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <CardContent className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                  <p className="text-muted-foreground">
+                    Choose a conversation from the list to start messaging
+                  </p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        </div>
       </div>
     </>
   );
