@@ -8,7 +8,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Photographers from "./pages/Photographers";
 import PhotographerProfile from "./pages/PhotographerProfile";
@@ -101,7 +101,7 @@ const App = () => (
                   <AppLayout />
                 </ProtectedRoute>
               }>
-                <Route index element={<Index />} />
+                <Route index element={<Dashboard />} />
                 <Route path="book/:photographerId/:serviceId" element={<BookService />} />
                 <Route path="bookings" element={<Bookings />} />
                 <Route path="messages" element={<Messages />} />
