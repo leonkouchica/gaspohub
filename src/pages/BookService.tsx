@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, DollarSign, MapPin, Camera, CheckCircle } from "lucide-react";
+import { CalendarIcon, Clock, DollarSign, MapPin, Camera, CheckCircle, CreditCard, Loader2, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
@@ -50,6 +51,15 @@ interface PhotographerData {
   avatar_url: string;
   location: string;
   bio: string;
+}
+
+interface PaymentGateway {
+  id: string;
+  gateway_name: string;
+  display_name: string;
+  is_active: boolean;
+  test_mode: boolean;
+  settings: Record<string, any>;
 }
 
 // Build sample photographer data from shared data
@@ -94,6 +104,11 @@ const BookService = () => {
   const [isSamplePhotographer, setIsSamplePhotographer] = useState(false);
   const [demoBookingComplete, setDemoBookingComplete] = useState(false);
 
+  // Payment state
+  const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<string>("");
+  const [paymentResult, setPaymentResult] = useState<any>(null);
+
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
   });
@@ -102,7 +117,23 @@ const BookService = () => {
     if (photographerId) {
       fetchData();
     }
+    fetchPaymentGateways();
   }, [photographerId, serviceId]);
+
+  const fetchPaymentGateways = async () => {
+    const { data, error } = await supabase
+      .from('payment_gateway_settings')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_name');
+
+    if (!error && data) {
+      setPaymentGateways(data as unknown as PaymentGateway[]);
+      if (data.length > 0) {
+        setSelectedGateway((data[0] as any).gateway_name);
+      }
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -113,7 +144,6 @@ const BookService = () => {
         setServices(sampleData.services);
         setIsSamplePhotographer(true);
 
-        // If a specific service is selected, find it
         if (serviceId) {
           const specificService = sampleData.services.find(s => s.id === serviceId);
           if (specificService) {
@@ -125,7 +155,6 @@ const BookService = () => {
         return;
       }
 
-      // Fetch real photographer data
       const { data: photographerData, error: photographerError } = await supabase
         .from('profiles')
         .select('*')
@@ -134,7 +163,6 @@ const BookService = () => {
 
       if (photographerError) throw photographerError;
 
-      // Fetch services for this photographer
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select('*')
@@ -146,7 +174,6 @@ const BookService = () => {
       setPhotographer(photographerData);
       setServices(servicesData || []);
 
-      // If a specific service is selected, find it
       if (serviceId && servicesData) {
         const specificService = servicesData.find(s => s.id === serviceId);
         if (specificService) {
@@ -165,6 +192,16 @@ const BookService = () => {
     }
   };
 
+  const getGatewayIcon = (name: string) => {
+    switch (name) {
+      case 'stripe': return '💳';
+      case 'paystack': return '🏦';
+      case 'flutterwave': return '🦋';
+      case 'manual': return '📝';
+      default: return '💰';
+    }
+  };
+
   const onSubmit = async (data: BookingForm) => {
     if (!selectedService) {
       toast({
@@ -178,7 +215,6 @@ const BookService = () => {
     // Handle demo booking for sample photographers
     if (isSamplePhotographer) {
       setSubmitting(true);
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       setDemoBookingComplete(true);
       setSubmitting(false);
@@ -199,7 +235,10 @@ const BookService = () => {
     }
 
     setSubmitting(true);
+    setPaymentResult(null);
+
     try {
+      // 1. Create the booking
       const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert({
@@ -209,13 +248,64 @@ const BookService = () => {
           booking_date: data.booking_date.toISOString(),
           job_details: data.job_details,
           total_amount: selectedService.price,
+          payment_status: selectedGateway ? 'processing' : 'pending',
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Create notification for the photographer
+      // 2. Process payment if a gateway is selected
+      if (selectedGateway) {
+        try {
+          const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+            'process-booking-payment',
+            {
+              body: {
+                bookingId: bookingData.id,
+                amount: selectedService.price,
+                currency: 'USD',
+                gateway: selectedGateway,
+                customerEmail: user.email,
+                metadata: {
+                  service: selectedService.title,
+                  photographer: `${photographer?.first_name} ${photographer?.last_name}`,
+                  date: format(data.booking_date, "PPP"),
+                }
+              }
+            }
+          );
+
+          if (paymentError) throw paymentError;
+
+          setPaymentResult(paymentData);
+
+          if (paymentData?.success) {
+            // Update booking payment status
+            await supabase
+              .from('bookings')
+              .update({
+                payment_status: paymentData.status === 'completed' ? 'paid' : 'pending',
+              })
+              .eq('id', bookingData.id);
+          } else {
+            // Payment failed, update status
+            await supabase
+              .from('bookings')
+              .update({ payment_status: 'failed' })
+              .eq('id', bookingData.id);
+          }
+        } catch (paymentErr) {
+          console.error('Payment processing error:', paymentErr);
+          // Booking still created, payment can be retried
+          await supabase
+            .from('bookings')
+            .update({ payment_status: 'pending' })
+            .eq('id', bookingData.id);
+        }
+      }
+
+      // 3. Send notifications
       await createNotification({
         user_id: photographerId!,
         title: "New Booking Request",
@@ -226,7 +316,6 @@ const BookService = () => {
         action_url: "/dashboard/bookings",
       });
 
-      // Create notification for the client
       await createNotification({
         user_id: user.id,
         title: "Booking Submitted",
@@ -237,7 +326,7 @@ const BookService = () => {
         action_url: "/dashboard/bookings",
       });
 
-      // Call edge function to send booking confirmation
+      // 4. Send booking confirmation
       try {
         await supabase.functions.invoke('send-booking-confirmation', {
           body: {
@@ -250,7 +339,6 @@ const BookService = () => {
         });
       } catch (fnError) {
         console.error('Failed to send booking confirmation:', fnError);
-        // Don't fail the booking if notification fails
       }
 
       toast({
@@ -303,8 +391,8 @@ const BookService = () => {
       <div className="container mx-auto px-6 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardContent className="pt-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-8 w-8 text-primary" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Demo Booking Complete!</h2>
             <p className="text-muted-foreground mb-6">
@@ -318,19 +406,19 @@ const BookService = () => {
               <h4 className="font-medium mb-3">What happens in a real booking:</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Payment is processed via your selected payment method</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span>Your booking request is sent to the photographer</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>You receive a confirmation email with booking details</span>
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>You receive a confirmation with booking details</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>The photographer reviews and confirms your booking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span>You can message the photographer to discuss details</span>
                 </li>
               </ul>
@@ -356,8 +444,8 @@ const BookService = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       {isSamplePhotographer && (
-        <div className="mb-6 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+        <div className="mb-6 p-4 rounded-lg bg-accent/50 border border-accent">
+          <p className="text-sm text-accent-foreground">
             <strong>Demo Mode:</strong> This is a sample photographer. You can experience the full booking flow, 
             but no real booking will be created. Sign up and connect with real photographers to make actual bookings!
           </p>
@@ -538,12 +626,87 @@ const BookService = () => {
                     )}
                   />
 
+                  {/* Payment Method Selection */}
+                  {!isSamplePhotographer && (
+                    <div>
+                      <Label className="text-base font-medium mb-3 flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        Payment Method
+                      </Label>
+                      {paymentGateways.length === 0 ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>No payment methods available. Your booking will be created with pending payment status.</span>
+                        </div>
+                      ) : (
+                        <RadioGroup
+                          value={selectedGateway}
+                          onValueChange={setSelectedGateway}
+                          className="space-y-2"
+                        >
+                          {paymentGateways.map((gateway) => (
+                            <div
+                              key={gateway.id}
+                              className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                                selectedGateway === gateway.gateway_name
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              <RadioGroupItem value={gateway.gateway_name} id={`booking-${gateway.gateway_name}`} />
+                              <Label
+                                htmlFor={`booking-${gateway.gateway_name}`}
+                                className="flex-1 cursor-pointer flex items-center gap-3"
+                              >
+                                <span className="text-lg">{getGatewayIcon(gateway.gateway_name)}</span>
+                                <div>
+                                  <div className="font-medium text-sm">{gateway.display_name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {gateway.gateway_name === 'stripe' && 'Credit card, Apple Pay, Google Pay'}
+                                    {gateway.gateway_name === 'paystack' && 'Cards, bank transfer, USSD'}
+                                    {gateway.gateway_name === 'flutterwave' && 'Cards, mobile money, bank'}
+                                    {gateway.gateway_name === 'manual' && 'Bank transfer or cash payment'}
+                                  </div>
+                                </div>
+                                {gateway.test_mode && (
+                                  <span className="ml-auto text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded">
+                                    Test
+                                  </span>
+                                )}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Price Summary */}
+                  {selectedService && (
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Service Total</span>
+                        <span className="text-xl font-bold text-primary">${selectedService.price}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     disabled={submitting || !selectedService}
                     className="w-full"
+                    size="lg"
                   >
-                    {submitting ? "Creating Booking..." : "Book Now"}
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : selectedGateway ? (
+                      `Pay $${selectedService?.price || 0} & Book Now`
+                    ) : (
+                      "Book Now"
+                    )}
                   </Button>
                 </form>
               </Form>
