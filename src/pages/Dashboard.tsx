@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DashboardSkeleton } from "@/components/PageSkeleton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -165,13 +166,7 @@ const Dashboard = () => {
 
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -247,7 +242,7 @@ const Dashboard = () => {
               <CardTitle className="flex items-center justify-between">
                 Recent Bookings
                 <Button asChild variant="outline" size="sm">
-                  <Link to="/bookings">View All</Link>
+                  <Link to="/dashboard/bookings">View All</Link>
                 </Button>
               </CardTitle>
             </CardHeader>
@@ -307,21 +302,21 @@ const Dashboard = () => {
               </Button>
               
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/services">
+                <Link to="/dashboard/services">
                   <Calendar className="mr-2 h-4 w-4" />
                   Browse Services
                 </Link>
               </Button>
               
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/shop">
+                <Link to="/dashboard/shop">
                   <ShoppingBag className="mr-2 h-4 w-4" />
                   Visit Shop
                 </Link>
               </Button>
               
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/bookings">
+                <Link to="/dashboard/bookings">
                   <Clock className="mr-2 h-4 w-4" />
                   My Bookings
                 </Link>

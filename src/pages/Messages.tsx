@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { MessagesSkeleton } from "@/components/PageSkeleton";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SEO } from "@/components/SEO";
-import { MessageSquare, Send, ArrowLeft } from "lucide-react";
+import { MessageSquare, Send, ArrowLeft, Plus, Search, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -48,6 +51,10 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [newConvoOpen, setNewConvoOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [searching, setSearching] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -260,14 +267,45 @@ const Messages = () => {
     }
   };
 
+  const handleSearchUsers = async (query: string) => {
+    setUserSearch(query);
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .neq('id', user?.id || '')
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .limit(10);
+      setSearchResults(data || []);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const startConversation = (recipientId: string) => {
+    setNewConvoOpen(false);
+    setUserSearch("");
+    setSearchResults([]);
+    // If conversation exists, select it
+    const existing = conversations.find((c) => c.partnerId === recipientId);
+    if (existing) {
+      handleSelectConversation(recipientId);
+    } else {
+      // Ensure profile exists
+      ensureProfile(recipientId);
+      setSelectedConversation(recipientId);
+    }
+  };
+
   if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading messages...</p>
-        </div>
-      </div>
-    );
+    return <MessagesSkeleton />;
   }
 
   return (
@@ -288,15 +326,73 @@ const Messages = () => {
           {/* Conversations List */}
           <Card className={`lg:col-span-1 ${selectedConversation ? 'hidden lg:block' : ''}`}>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MessageSquare className="h-5 w-5" />
-                Conversations
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MessageSquare className="h-5 w-5" />
+                  Conversations
+                </CardTitle>
+                <Dialog open={newConvoOpen} onOpenChange={setNewConvoOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-1" />
+                      New
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>New Message</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by name or email..."
+                          value={userSearch}
+                          onChange={(e) => handleSearchUsers(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      {searching && (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      {searchResults.length > 0 && (
+                        <div className="space-y-1 max-h-64 overflow-y-auto">
+                          {searchResults.map((profile) => (
+                            <button
+                              key={profile.id}
+                              onClick={() => startConversation(profile.id)}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                            >
+                              <Avatar className="h-9 w-9">
+                                <AvatarImage src={profile.avatar_url || undefined} />
+                                <AvatarFallback>
+                                  {profile.first_name?.[0]}{profile.last_name?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium">
+                                {profile.first_name || 'Unknown'} {profile.last_name || ''}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {userSearch.length >= 2 && !searching && searchResults.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-4">No users found</p>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {conversations.length === 0 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No conversations yet</p>
+                  <p className="text-muted-foreground mb-3">No conversations yet</p>
+                  <Button size="sm" variant="outline" onClick={() => setNewConvoOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" /> Start a conversation
+                  </Button>
                 </div>
               ) : (
                 <ScrollArea className="h-[calc(100vh-380px)] min-h-[400px]">

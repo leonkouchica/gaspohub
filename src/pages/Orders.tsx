@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { OrdersSkeleton } from "@/components/PageSkeleton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,13 +170,7 @@ export default function Orders() {
   };
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading orders...</p>
-        </div>
-      </div>
-    );
+    return <OrdersSkeleton />;
   }
 
   if (orders.length === 0) {

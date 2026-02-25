@@ -404,6 +404,8 @@ const Home = () => {
                         src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400" 
                         alt="Photography"
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <div className="aspect-square rounded-lg bg-muted overflow-hidden">
@@ -411,6 +413,8 @@ const Home = () => {
                         src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=400" 
                         alt="Photography"
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   </div>
@@ -420,6 +424,8 @@ const Home = () => {
                         src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400" 
                         alt="Camera"
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <div className="aspect-[4/3] rounded-lg bg-muted overflow-hidden">
@@ -427,6 +433,8 @@ const Home = () => {
                         src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400" 
                         alt="Photography session"
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   </div>
