@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BookingsSkeleton } from "@/components/PageSkeleton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -200,13 +201,7 @@ const Bookings = () => {
 
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <p className="text-muted-foreground">Loading bookings...</p>
-        </div>
-      </div>
-    );
+    return <BookingsSkeleton />;
   }
 
   return (

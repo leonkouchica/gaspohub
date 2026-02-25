@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'SnapConnect - Photography Marketplace',
-        short_name: 'SnapConnect',
+        name: 'GASPOHUB - Photography Marketplace',
+        short_name: 'GASPOHUB',
         description: 'Find and book professional photographers for any occasion',
         theme_color: '#ef4444',
         background_color: '#ffffff',
