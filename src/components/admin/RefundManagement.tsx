@@ -141,11 +141,40 @@ export function RefundManagement() {
     setProcessing(true);
 
     try {
+      // For "processed" action, call the edge function which handles
+      // gateway refund, payout cancellation, audit log, and notifications
+      if (action === 'processed') {
+        const amount = parseFloat(refundAmount) || selectedRefund.total_amount;
+        const { data: result, error: fnError } = await supabase.functions.invoke(
+          'process-refund',
+          {
+            body: {
+              bookingId: selectedRefund.id,
+              refundAmount: amount,
+              adminNotes: adminNote || undefined,
+            },
+          }
+        );
+
+        if (fnError) throw fnError;
+        if (result?.error) throw new Error(result.error);
+
+        toast({
+          title: 'Refund Processed',
+          description: `$${amount.toFixed(2)} refund processed successfully. ${result?.refund?.cancelledPayouts || 0} pending payouts cancelled.`,
+        });
+
+        closeDialog();
+        fetchRefunds();
+        return;
+      }
+
+      // For approve/reject, update directly
       const now = new Date().toISOString();
       const updateData: Record<string, unknown> = {
         refund_status: action,
       };
-      if (action === 'approved' || action === 'processed') {
+      if (action === 'approved') {
         updateData.refund_amount = parseFloat(refundAmount) || selectedRefund.total_amount;
         updateData.refunded_at = now;
       }
@@ -175,12 +204,11 @@ export function RefundManagement() {
         const messages: Record<string, string> = {
           approved: `Your refund of $${Number(updateData.refund_amount).toFixed(2)} has been approved and will be processed to your original payment method shortly.`,
           rejected: `Your refund request for the booking on ${format(new Date(selectedRefund.booking_date), 'MMM d, yyyy')} has been reviewed and could not be approved. ${adminNote ? `Note: ${adminNote}` : 'Please contact support for more details.'}`,
-          processed: `Your refund of $${Number(updateData.refund_amount).toFixed(2)} has been successfully processed. Please allow 3–5 business days for it to appear in your account.`,
         };
 
         await createNotification({
           user_id: selectedRefund.client_id,
-          title: action === 'approved' ? 'Refund Approved' : action === 'processed' ? 'Refund Processed' : 'Refund Update',
+          title: action === 'approved' ? 'Refund Approved' : 'Refund Update',
           message: messages[action],
           type: 'payment',
           related_id: selectedRefund.id,
