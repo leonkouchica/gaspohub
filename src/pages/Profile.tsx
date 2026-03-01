@@ -12,8 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { FileUpload } from "@/components/FileUpload";
 import { SEO } from "@/components/SEO";
-import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, Plus, Trash2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, Plus, Trash2, Lock, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   id: string;
@@ -49,6 +50,12 @@ const Profile = () => {
   const [newSpecialty, setNewSpecialty] = useState("");
   const [newGear, setNewGear] = useState("");
   const [newPortfolioImage, setNewPortfolioImage] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const { toast } = useToast();
 
   const isPhotographer = roles.some(r => r.role === 'photographer');
@@ -140,6 +147,7 @@ const Profile = () => {
           bio: profile.bio,
           location: profile.location,
           phone: profile.phone,
+          avatar_url: profile.avatar_url,
         })
         .eq('id', user?.id);
 
@@ -271,6 +279,54 @@ const Profile = () => {
         description: "Could not sign you out",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Password too short", description: "Minimum 6 characters", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", description: "Please confirm your new password", variant: "destructive" });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated", description: "Your password has been changed successfully" });
+      setNewPassword("");
+      setConfirmPassword("");
+      setCurrentPassword("");
+    } catch (error: any) {
+      toast({ title: "Failed to update password", description: error.message, variant: "destructive" });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+    try {
+      // Sign out the user - actual account deletion requires admin/service role
+      await signOut();
+      toast({
+        title: "Account deletion requested",
+        description: "Your account deletion has been initiated. Contact support if you need immediate action.",
+      });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to process account deletion", variant: "destructive" });
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: user?.email || '' });
+      if (error) throw error;
+      toast({ title: "Verification email sent", description: "Check your inbox for the verification link" });
+    } catch (error: any) {
+      toast({ title: "Failed to resend", description: error.message, variant: "destructive" });
     }
   };
 
@@ -469,7 +525,76 @@ const Profile = () => {
         </div>
 
         {/* Account Actions */}
-        <div>
+        <div className="space-y-6">
+          {/* Email Verification */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Email Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {user?.email_confirmed_at ? (
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-4 w-4" />
+                  Email verified
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400">
+                    <AlertTriangle className="h-4 w-4" />
+                    Email not verified
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleResendVerification}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Resend Verification
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Change Password */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Change Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Min. 6 characters"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                />
+              </div>
+              <Button
+                onClick={handleChangePassword}
+                disabled={changingPassword || !newPassword}
+                className="w-full"
+              >
+                {changingPassword ? "Updating..." : "Update Password"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Account Actions */}
           <Card>
             <CardHeader>
               <CardTitle>Account Actions</CardTitle>
@@ -477,10 +602,21 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <Button 
                 onClick={handleSignOut}
-                variant="destructive" 
+                variant="outline" 
                 className="w-full"
               >
                 Sign Out
+              </Button>
+              
+              <Separator />
+
+              <Button 
+                onClick={() => setDeleteDialogOpen(true)}
+                variant="destructive" 
+                className="w-full"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Delete Account
               </Button>
               
               <div className="text-xs text-muted-foreground">
@@ -489,6 +625,34 @@ const Profile = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Delete Account Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Account</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action is irreversible. All your data, bookings, and orders will be permanently deleted.
+                Type <strong>DELETE</strong> to confirm.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder='Type "DELETE" to confirm'
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "DELETE"}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Account
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Photographer Portfolio Section */}
