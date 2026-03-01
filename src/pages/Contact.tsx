@@ -8,6 +8,7 @@ import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -54,9 +55,14 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    // Simulate form submission (replace with actual API call when email edge function is set up)
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: result.data.name,
+        email: result.data.email,
+        subject: result.data.subject,
+        message: result.data.message,
+      });
+      if (error) throw error;
       toast.success("Message sent successfully! We'll get back to you soon.");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch {

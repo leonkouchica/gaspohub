@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const AppLayout = () => {
   const { user, signOut } = useAuth();
@@ -23,6 +24,7 @@ export const AppLayout = () => {
               <span className="text-sm text-muted-foreground">
                 Welcome, {user?.user_metadata?.first_name || user?.email?.split('@')[0]}
               </span>
+              <ThemeToggle />
               <Button variant="outline" onClick={signOut}>
                 Sign Out
               </Button>
