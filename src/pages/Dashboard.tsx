@@ -302,14 +302,14 @@ const Dashboard = () => {
               </Button>
               
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/dashboard/services">
+                <Link to="/services">
                   <Calendar className="mr-2 h-4 w-4" />
                   Browse Services
                 </Link>
               </Button>
               
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/dashboard/shop">
+                <Link to="/shop">
                   <ShoppingBag className="mr-2 h-4 w-4" />
                   Visit Shop
                 </Link>

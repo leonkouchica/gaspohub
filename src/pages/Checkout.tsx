@@ -181,7 +181,7 @@ export default function Checkout() {
           type: "payment",
           related_id: order.id,
           related_type: "order",
-          action_url: "/orders",
+          action_url: "/dashboard/orders",
         });
 
         clearCart();
@@ -192,9 +192,9 @@ export default function Checkout() {
 
         // Delay navigation for manual payments to show instructions
         if (selectedGateway === 'manual') {
-          setTimeout(() => navigate("/orders"), 3000);
+          setTimeout(() => navigate("/dashboard/orders"), 3000);
         } else {
-          navigate("/orders");
+          navigate("/dashboard/orders");
         }
       } else {
         toast({
@@ -244,7 +244,7 @@ export default function Checkout() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => navigate("/orders")} className="w-full">
+            <Button onClick={() => navigate("/dashboard/orders")} className="w-full">
               View My Orders
             </Button>
           </CardFooter>
