@@ -798,6 +798,8 @@ const Profile = () => {
                           <img 
                             src={url} 
                             alt={`Portfolio ${index + 1}`}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-32 object-cover rounded"
                           />
                           <Button
@@ -820,6 +822,8 @@ const Profile = () => {
                           key={index}
                           src={url} 
                           alt={`Portfolio ${index + 1}`}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-32 object-cover rounded"
                         />
                       ))
