@@ -171,7 +171,11 @@ export function RefundManagement() {
 
       // For approve/reject, update directly
       const now = new Date().toISOString();
-      const updateData: Record<string, unknown> = {
+      const updateData: {
+        refund_status: string;
+        refund_amount?: number;
+        refunded_at?: string;
+      } = {
         refund_status: action,
       };
       if (action === 'approved') {
