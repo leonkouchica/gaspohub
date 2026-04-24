@@ -436,6 +436,8 @@ const PhotographerProfile = () => {
                           <img 
                             src={image} 
                             alt={`Portfolio image ${index + 1}`}
+                            loading="lazy"
+                            decoding="async"
                             className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
                           />
                         </AspectRatio>

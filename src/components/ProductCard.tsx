@@ -38,7 +38,13 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="overflow-hidden">
       <div className="aspect-square relative">
-        <img src={imageUrl} alt={product.title} className="w-full h-full object-cover" />
+        <img
+          src={imageUrl}
+          alt={product.title}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover"
+        />
         {product.is_digital && (
           <Badge className="absolute top-2 right-2">Digital</Badge>
         )}

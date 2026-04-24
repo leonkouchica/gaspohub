@@ -10,6 +10,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Photographers from "./pages/Photographers";
 import PhotographerProfile from "./pages/PhotographerProfile";
 import Services from "./pages/Services";
@@ -97,6 +98,7 @@ const App = () => (
               
               {/* Auth Route */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={
