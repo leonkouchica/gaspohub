@@ -755,10 +755,12 @@ const Admin = () => {
       if (payoutError) throw payoutError;
 
       // Update booking
-      const field = paymentType === 'initial' ? 'initial_payment_released' : 'final_payment_released';
+      const updatePayload = paymentType === 'initial'
+        ? { initial_payment_released: true }
+        : { final_payment_released: true };
       const { error } = await supabase
         .from('bookings')
-        .update({ [field]: true })
+        .update(updatePayload)
         .eq('id', bookingId);
 
       if (error) throw error;

@@ -103,7 +103,11 @@ export function DisputeManagement() {
     if (!selectedDispute) return;
 
     try {
-      const updateData: Record<string, unknown> = {
+      const updateData: {
+        refund_status: string;
+        refunded_at: string | null;
+        refund_amount?: number;
+      } = {
         refund_status: status,
         refunded_at: status === 'approved' ? new Date().toISOString() : null,
       };
