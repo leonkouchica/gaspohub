@@ -1855,6 +1855,10 @@ const Admin = () => {
         <TabsContent value="payouts">
           <PayoutReleasePanel />
         </TabsContent>
+
+        <TabsContent value="contact">
+          <ContactSubmissions />
+        </TabsContent>
       </Tabs>
     </div>
   );
