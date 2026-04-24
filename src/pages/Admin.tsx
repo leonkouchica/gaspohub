@@ -17,6 +17,7 @@ import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySetting
 import { EmailSettings } from "@/components/admin/EmailSettings";
 import { AdvertisementSettings } from "@/components/admin/AdvertisementSettings";
 import { PayoutReleasePanel } from "@/components/admin/PayoutReleasePanel";
+import { ContactSubmissions } from "@/components/admin/ContactSubmissions";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { createNotification } from "@/lib/notifications";
@@ -983,6 +984,10 @@ const Admin = () => {
             <Wallet className="h-4 w-4" />
             Payouts
           </TabsTrigger>
+          <TabsTrigger value="contact" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Contact
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -1849,6 +1854,10 @@ const Admin = () => {
 
         <TabsContent value="payouts">
           <PayoutReleasePanel />
+        </TabsContent>
+
+        <TabsContent value="contact">
+          <ContactSubmissions />
         </TabsContent>
       </Tabs>
     </div>
