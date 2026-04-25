@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
 import { SEO } from "@/components/SEO";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -229,9 +229,12 @@ const Bookings = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="requested">Requested</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="work_started">Work Started</SelectItem>
+              <SelectItem value="complete">Complete</SelectItem>
+              <SelectItem value="client_confirmed">Client Confirmed</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
@@ -281,7 +284,7 @@ const Bookings = () => {
         </TabsContent>
         
         <TabsContent value="pending">
-          {renderBookingsList(filteredBookings.filter(b => b.status === 'pending'))}
+          {renderBookingsList(filteredBookings.filter(b => b.status === 'requested'))}
         </TabsContent>
       </Tabs>
 
@@ -452,7 +455,7 @@ const Bookings = () => {
                     </Link>
                   </Button>
                   
-                  {booking.status === 'pending' && (
+                  {(booking.status === 'requested' || booking.status === 'accepted') && (
                     <Button 
                       variant="destructive" 
                       size="sm"
@@ -466,7 +469,27 @@ const Bookings = () => {
                     </Button>
                   )}
                   
-                  {(booking.status === 'completed' || booking.status === 'confirmed') && (
+                  {booking.status === 'complete' && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        const { data, error } = await supabase.functions.invoke('transition-booking-status', {
+                          body: { bookingId: booking.id, action: 'client_confirm' },
+                        });
+                        if (error || (data && (data as any).error)) {
+                          toast({ title: 'Error', description: error?.message || (data as any).error, variant: 'destructive' });
+                        } else {
+                          toast({ title: 'Confirmed', description: 'Final payment will be released shortly.' });
+                          fetchBookings();
+                        }
+                      }}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Confirm Completion
+                    </Button>
+                  )}
+
+                  {(['accepted','work_started','complete','client_confirmed','paid'].includes(booking.status)) && (
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -497,7 +520,7 @@ const Bookings = () => {
                     </Button>
                   )}
                   
-                  {booking.status === 'completed' && (
+                  {(booking.status === 'client_confirmed' || booking.status === 'paid') && (
                     <Button 
                       variant="outline" 
                       size="sm"

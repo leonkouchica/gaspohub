@@ -95,9 +95,15 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          client_confirmed_at: string | null
           client_id: string
           commission_rate: number | null
           created_at: string | null
+          escrow_commission_amount: number | null
+          escrow_final_amount: number | null
+          escrow_held_amount: number | null
+          escrow_initial_amount: number | null
+          escrow_locked_at: string | null
           evidence_notes: string | null
           evidence_submitted_at: string | null
           evidence_urls: string[] | null
@@ -105,6 +111,7 @@ export type Database = {
           id: string
           initial_payment_released: boolean | null
           job_details: string | null
+          paid_at: string | null
           payment_status: string | null
           photographer_id: string
           refund_amount: number | null
@@ -114,6 +121,8 @@ export type Database = {
           status: string | null
           total_amount: number
           updated_at: string | null
+          work_completed_at: string | null
+          work_started_at: string | null
         }
         Insert: {
           admin_review_notes?: string | null
@@ -123,9 +132,15 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          client_confirmed_at?: string | null
           client_id: string
           commission_rate?: number | null
           created_at?: string | null
+          escrow_commission_amount?: number | null
+          escrow_final_amount?: number | null
+          escrow_held_amount?: number | null
+          escrow_initial_amount?: number | null
+          escrow_locked_at?: string | null
           evidence_notes?: string | null
           evidence_submitted_at?: string | null
           evidence_urls?: string[] | null
@@ -133,6 +148,7 @@ export type Database = {
           id?: string
           initial_payment_released?: boolean | null
           job_details?: string | null
+          paid_at?: string | null
           payment_status?: string | null
           photographer_id: string
           refund_amount?: number | null
@@ -142,6 +158,8 @@ export type Database = {
           status?: string | null
           total_amount: number
           updated_at?: string | null
+          work_completed_at?: string | null
+          work_started_at?: string | null
         }
         Update: {
           admin_review_notes?: string | null
@@ -151,9 +169,15 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          client_confirmed_at?: string | null
           client_id?: string
           commission_rate?: number | null
           created_at?: string | null
+          escrow_commission_amount?: number | null
+          escrow_final_amount?: number | null
+          escrow_held_amount?: number | null
+          escrow_initial_amount?: number | null
+          escrow_locked_at?: string | null
           evidence_notes?: string | null
           evidence_submitted_at?: string | null
           evidence_urls?: string[] | null
@@ -161,6 +185,7 @@ export type Database = {
           id?: string
           initial_payment_released?: boolean | null
           job_details?: string | null
+          paid_at?: string | null
           payment_status?: string | null
           photographer_id?: string
           refund_amount?: number | null
@@ -170,6 +195,8 @@ export type Database = {
           status?: string | null
           total_amount?: number
           updated_at?: string | null
+          work_completed_at?: string | null
+          work_started_at?: string | null
         }
         Relationships: [
           {

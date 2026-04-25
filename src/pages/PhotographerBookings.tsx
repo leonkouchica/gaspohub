@@ -130,26 +130,24 @@ const PhotographerBookings = () => {
     filterBookings();
   }, [statusFilter, bookings]);
 
-  const handleConfirmBooking = async (bookingId: string) => {
+  const handleTransition = async (bookingId: string, action: 'accept' | 'start_work') => {
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: 'confirmed' })
-        .eq('id', bookingId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Booking confirmed",
-        description: "The booking has been confirmed successfully",
+      const { data, error } = await supabase.functions.invoke('transition-booking-status', {
+        body: { bookingId, action },
       });
-
-      fetchBookings();
-    } catch (error) {
+      if (error || (data && (data as any).error)) {
+        throw new Error(error?.message || (data as any).error);
+      }
       toast({
-        title: "Error",
-        description: "Failed to confirm booking",
-        variant: "destructive",
+        title: action === 'accept' ? 'Booking accepted' : 'Work started',
+        description: 'Status updated successfully',
+      });
+      fetchBookings();
+    } catch (e) {
+      toast({
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to update booking',
+        variant: 'destructive',
       });
     }
   };
@@ -157,10 +155,13 @@ const PhotographerBookings = () => {
   const calculateEarnings = (booking: PhotographerBooking) => {
     const total = Number(booking.total_amount);
     const commissionRate = Number(booking.commission_rate) || 10;
-    const commission = total * (commissionRate / 100);
-    const initialRelease = total * 0.60;
-    const finalRelease = (total * 0.40) - commission;
-    const totalEarnings = total - commission;
+    // Prefer locked escrow amounts when available
+    const b = booking as any;
+    const initialRelease = b.escrow_initial_amount != null ? Number(b.escrow_initial_amount) : total * 0.60;
+    const heldAmount = b.escrow_held_amount != null ? Number(b.escrow_held_amount) : total * 0.40;
+    const commission = b.escrow_commission_amount != null ? Number(b.escrow_commission_amount) : total * (commissionRate / 100);
+    const finalRelease = b.escrow_final_amount != null ? Number(b.escrow_final_amount) : heldAmount - commission;
+    const totalEarnings = initialRelease + finalRelease;
     
     return {
       total,
@@ -189,16 +190,15 @@ const PhotographerBookings = () => {
 
   // Calculate stats
   const stats = {
-    pending: bookings.filter(b => b.status === 'pending').length,
-    confirmed: bookings.filter(b => b.status === 'confirmed').length,
-    completed: bookings.filter(b => b.status === 'completed').length,
-    awaitingPayout: bookings.filter(b => 
-      b.status === 'completed' && 
-      b.payment_status === 'paid' && 
+    pending: bookings.filter(b => b.status === 'requested').length,
+    confirmed: bookings.filter(b => ['accepted','work_started'].includes(b.status)).length,
+    completed: bookings.filter(b => ['complete','client_confirmed','paid'].includes(b.status)).length,
+    awaitingPayout: bookings.filter(b =>
+      ['complete','client_confirmed'].includes(b.status) &&
       !b.final_payment_released
     ).length,
     totalEarnings: bookings
-      .filter(b => b.payment_status === 'paid')
+      .filter(b => b.status === 'paid' || b.final_payment_released)
       .reduce((sum, b) => sum + calculateEarnings(b).totalEarnings, 0)
   };
 
@@ -287,9 +287,12 @@ const PhotographerBookings = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="requested">Requested</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="work_started">Work Started</SelectItem>
+                <SelectItem value="complete">Complete</SelectItem>
+                <SelectItem value="client_confirmed">Client Confirmed</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
@@ -314,15 +317,15 @@ const PhotographerBookings = () => {
           </TabsContent>
           
           <TabsContent value="pending">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'pending'))}
+          {renderBookingsList(filteredBookings.filter(b => b.status === 'requested'))}
           </TabsContent>
           
           <TabsContent value="active">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'confirmed'))}
+          {renderBookingsList(filteredBookings.filter(b => ['accepted','work_started'].includes(b.status)))}
           </TabsContent>
           
           <TabsContent value="completed">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'completed'))}
+          {renderBookingsList(filteredBookings.filter(b => ['complete','client_confirmed','paid'].includes(b.status)))}
           </TabsContent>
         </Tabs>
 
@@ -375,12 +378,12 @@ const PhotographerBookings = () => {
           const earnings = calculateEarnings(booking);
           const isPast = isBefore(new Date(booking.booking_date), startOfDay(new Date()));
           const canSubmitEvidence = 
-            (booking.status === 'confirmed' || booking.status === 'accepted' || booking.status === 'in_progress') && 
+            booking.status === 'work_started' &&
             isPast && 
             !booking.evidence_submitted_at;
           const evidenceSubmitted = !!booking.evidence_submitted_at;
           const awaitingFinalPayout = 
-            booking.status === 'completed' && 
+            ['complete','client_confirmed'].includes(booking.status) &&
             !booking.final_payment_released;
 
           return (
@@ -514,13 +517,23 @@ const PhotographerBookings = () => {
                     </Link>
                   </Button>
                   
-                  {booking.status === 'pending' && (
-                    <Button 
+                  {booking.status === 'requested' && (
+                    <Button
                       size="sm"
-                      onClick={() => handleConfirmBooking(booking.id)}
+                      onClick={() => handleTransition(booking.id, 'accept')}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirm Booking
+                      Accept Booking
+                    </Button>
+                  )}
+
+                  {booking.status === 'accepted' && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleTransition(booking.id, 'start_work')}
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Start Work
                     </Button>
                   )}
                   

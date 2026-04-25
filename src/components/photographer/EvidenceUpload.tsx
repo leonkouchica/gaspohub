@@ -135,10 +135,11 @@ export const EvidenceUpload = ({
       const { error } = await supabase
         .from('bookings')
         .update({
-          status: 'completed',
+          status: 'complete',
           evidence_urls: evidenceUrls,
           evidence_notes: notes,
           evidence_submitted_at: new Date().toISOString(),
+          work_completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId);

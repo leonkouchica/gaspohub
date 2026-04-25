@@ -82,9 +82,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (booking.status !== 'completed') {
+    if (booking.status !== 'client_confirmed') {
       return new Response(
-        JSON.stringify({ error: 'Booking must be marked as completed before releasing final payment' }),
+        JSON.stringify({ error: 'Booking must be confirmed by the client before releasing final payment' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -114,11 +114,17 @@ Deno.serve(async (req) => {
 
     const transactionId = `final_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Use locked escrow amount if available, otherwise fall back to existing payout amount
+    const releaseAmount = booking.escrow_final_amount != null
+      ? Number(booking.escrow_final_amount)
+      : Number(pendingPayout.amount);
+
     // Update the payout to completed
     const { error: payoutUpdateError } = await supabase
       .from('payouts')
       .update({
         status: 'completed',
+        amount: releaseAmount,
         transaction_reference: transactionId,
         completed_at: new Date().toISOString(),
         released_at: new Date().toISOString(),
@@ -138,6 +144,9 @@ Deno.serve(async (req) => {
       .from('bookings')
       .update({
         final_payment_released: true,
+        status: 'paid',
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
         admin_review_notes: adminNotes,
         admin_reviewed_at: new Date().toISOString(),
         admin_reviewed_by: user.id,

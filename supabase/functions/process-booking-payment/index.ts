@@ -124,6 +124,11 @@ Deno.serve(async (req) => {
         initial_payment_released: true,
         final_payment_released: false,
         commission_rate: commissionRate,
+        escrow_initial_amount: initialRelease,
+        escrow_held_amount: heldAmount,
+        escrow_commission_amount: commissionAmount,
+        escrow_final_amount: finalRelease,
+        escrow_locked_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', bookingId);
