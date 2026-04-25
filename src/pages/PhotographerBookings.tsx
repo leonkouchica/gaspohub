@@ -314,15 +314,15 @@ const PhotographerBookings = () => {
           </TabsContent>
           
           <TabsContent value="pending">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'pending'))}
+          {renderBookingsList(filteredBookings.filter(b => b.status === 'requested'))}
           </TabsContent>
           
           <TabsContent value="active">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'confirmed'))}
+          {renderBookingsList(filteredBookings.filter(b => ['accepted','work_started'].includes(b.status)))}
           </TabsContent>
           
           <TabsContent value="completed">
-            {renderBookingsList(filteredBookings.filter(b => b.status === 'completed'))}
+          {renderBookingsList(filteredBookings.filter(b => ['complete','client_confirmed','paid'].includes(b.status)))}
           </TabsContent>
         </Tabs>
 
@@ -375,12 +375,12 @@ const PhotographerBookings = () => {
           const earnings = calculateEarnings(booking);
           const isPast = isBefore(new Date(booking.booking_date), startOfDay(new Date()));
           const canSubmitEvidence = 
-            (booking.status === 'confirmed' || booking.status === 'accepted' || booking.status === 'in_progress') && 
+            booking.status === 'work_started' &&
             isPast && 
             !booking.evidence_submitted_at;
           const evidenceSubmitted = !!booking.evidence_submitted_at;
           const awaitingFinalPayout = 
-            booking.status === 'completed' && 
+            ['complete','client_confirmed'].includes(booking.status) &&
             !booking.final_payment_released;
 
           return (
@@ -514,13 +514,23 @@ const PhotographerBookings = () => {
                     </Link>
                   </Button>
                   
-                  {booking.status === 'pending' && (
-                    <Button 
+                  {booking.status === 'requested' && (
+                    <Button
                       size="sm"
-                      onClick={() => handleConfirmBooking(booking.id)}
+                      onClick={() => handleTransition(booking.id, 'accept')}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirm Booking
+                      Accept Booking
+                    </Button>
+                  )}
+
+                  {booking.status === 'accepted' && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleTransition(booking.id, 'start_work')}
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Start Work
                     </Button>
                   )}
                   
