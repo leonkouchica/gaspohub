@@ -287,9 +287,12 @@ const PhotographerBookings = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="requested">Requested</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="work_started">Work Started</SelectItem>
+                <SelectItem value="complete">Complete</SelectItem>
+                <SelectItem value="client_confirmed">Client Confirmed</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
