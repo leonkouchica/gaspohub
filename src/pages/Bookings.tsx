@@ -42,6 +42,7 @@ interface BookingWithDetails {
     avatar_url: string;
     location: string;
   };
+  has_active_dispute?: boolean;
 }
 
 const Bookings = () => {
@@ -481,7 +482,7 @@ const Bookings = () => {
                     </Button>
                   )}
                   
-                  {booking.status === 'complete' && (
+                  {booking.status === 'complete' && !booking.has_active_dispute && (
                     <Button
                       size="sm"
                       onClick={async () => {
@@ -499,6 +500,12 @@ const Bookings = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Confirm Completion
                     </Button>
+                  )}
+
+                  {booking.has_active_dispute && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Locked: dispute under review
+                    </Badge>
                   )}
 
                   {['work_started','complete','client_confirmed','disputed'].includes(booking.status) && (
