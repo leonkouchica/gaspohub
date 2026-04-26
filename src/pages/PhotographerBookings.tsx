@@ -392,7 +392,8 @@ const PhotographerBookings = () => {
           const canSubmitEvidence = 
             booking.status === 'work_started' &&
             isPast && 
-            !booking.evidence_submitted_at;
+            !booking.evidence_submitted_at &&
+            !booking.has_active_dispute;
           const evidenceSubmitted = !!booking.evidence_submitted_at;
           const awaitingFinalPayout = 
             ['complete','client_confirmed'].includes(booking.status) &&
@@ -570,6 +571,12 @@ const PhotographerBookings = () => {
                     <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
                       <CheckCircle className="h-3 w-3" />
                       Fully Paid
+                    </Badge>
+                  )}
+
+                  {booking.has_active_dispute && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Locked: dispute under review
                     </Badge>
                   )}
 
