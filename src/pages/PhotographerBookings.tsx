@@ -54,6 +54,7 @@ interface PhotographerBooking {
     avatar_url: string;
     email: string;
   };
+  has_active_dispute?: boolean;
 }
 
 const PhotographerBookings = () => {
