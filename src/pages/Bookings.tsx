@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
 import { SEO } from "@/components/SEO";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText, CheckCircle } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText, CheckCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
