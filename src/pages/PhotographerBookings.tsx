@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SEO } from "@/components/SEO";
 import { EvidenceUpload } from "@/components/photographer/EvidenceUpload";
+import { RaiseDisputeDialog } from "@/components/disputes/RaiseDisputeDialog";
 import { 
   Calendar, 
   Clock, 
@@ -559,6 +560,14 @@ const PhotographerBookings = () => {
                       <CheckCircle className="h-3 w-3" />
                       Fully Paid
                     </Badge>
+                  )}
+
+                  {['work_started','complete','client_confirmed','disputed'].includes(booking.status) && (
+                    <RaiseDisputeDialog
+                      bookingId={booking.id}
+                      role="photographer"
+                      onCreated={fetchBookings}
+                    />
                   )}
                 </div>
               </CardContent>

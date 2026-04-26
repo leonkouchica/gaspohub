@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge, getStatusVariant } from "@/components/ui/status-badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { RaiseDisputeDialog } from "@/components/disputes/RaiseDisputeDialog";
 import { Textarea } from "@/components/ui/textarea";
 import { createNotification } from "@/lib/notifications";
 import { generateInvoicePDF } from "@/lib/invoice";
@@ -487,6 +488,14 @@ const Bookings = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Confirm Completion
                     </Button>
+                  )}
+
+                  {['work_started','complete','client_confirmed','disputed'].includes(booking.status) && (
+                    <RaiseDisputeDialog
+                      bookingId={booking.id}
+                      role="client"
+                      onCreated={fetchBookings}
+                    />
                   )}
 
                   {(['accepted','work_started','complete','client_confirmed','paid'].includes(booking.status)) && (
