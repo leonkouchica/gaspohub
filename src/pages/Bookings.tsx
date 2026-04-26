@@ -73,6 +73,16 @@ const Bookings = () => {
 
       if (error) throw error;
 
+      const bookingIds = (data || []).map((b) => b.id);
+      const { data: activeDisputes } = bookingIds.length
+        ? await supabase
+            .from('disputes')
+            .select('booking_id, status')
+            .in('booking_id', bookingIds)
+            .in('status', ['open', 'under_review'])
+        : { data: [] as { booking_id: string; status: string }[] };
+      const disputedSet = new Set((activeDisputes || []).map((d) => d.booking_id));
+
       const bookingsWithData = await Promise.all(
         (data || []).map(async (booking) => {
           const { data: serviceData } = await supabase
@@ -90,7 +100,8 @@ const Bookings = () => {
           return {
             ...booking,
             services: serviceData || { title: '', duration_hours: 0 },
-            profiles: profileData || { first_name: '', last_name: '', avatar_url: '', location: '' }
+            profiles: profileData || { first_name: '', last_name: '', avatar_url: '', location: '' },
+            has_active_dispute: disputedSet.has(booking.id),
           };
         })
       );
