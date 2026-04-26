@@ -71,6 +71,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: `Cannot ${body.action} from status "${booking.status}"` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Block forward completion transitions while a dispute is active
+    if (['mark_complete', 'client_confirm'].includes(body.action)) {
+      const { count: activeDisputes } = await supabase
+        .from('disputes')
+        .select('id', { head: true, count: 'exact' })
+        .eq('booking_id', body.bookingId)
+        .in('status', ['open', 'under_review']);
+      if ((activeDisputes ?? 0) > 0) {
+        return new Response(
+          JSON.stringify({ error: 'This booking has an active dispute; completion is locked until the dispute is resolved.' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
+
     const update: Record<string, unknown> = { status: rule.to, updated_at: new Date().toISOString() };
     if (rule.ts) update[rule.ts] = new Date().toISOString();
     if (body.action === 'cancel') {

@@ -89,6 +89,20 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Block while there's an open/under_review dispute
+    const { count: activeDisputes } = await supabase
+      .from('disputes')
+      .select('id', { head: true, count: 'exact' })
+      .eq('booking_id', bookingId)
+      .in('status', ['open', 'under_review']);
+
+    if ((activeDisputes ?? 0) > 0) {
+      return new Response(
+        JSON.stringify({ error: 'Final payout is locked: this booking has an active dispute. Resolve the dispute first.' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!booking.evidence_urls || booking.evidence_urls.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Photographer must submit evidence before final payment can be released' }),

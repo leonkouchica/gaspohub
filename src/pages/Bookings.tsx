@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ReviewDialog } from "@/components/ReviewDialog";
 import { SEO } from "@/components/SEO";
-import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText, CheckCircle } from "lucide-react";
+import { Calendar, Clock, DollarSign, MessageSquare, MapPin, Filter, Star, XCircle, FileText, CheckCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,6 +42,7 @@ interface BookingWithDetails {
     avatar_url: string;
     location: string;
   };
+  has_active_dispute?: boolean;
 }
 
 const Bookings = () => {
@@ -73,6 +74,16 @@ const Bookings = () => {
 
       if (error) throw error;
 
+      const bookingIds = (data || []).map((b) => b.id);
+      const { data: activeDisputes } = bookingIds.length
+        ? await supabase
+            .from('disputes')
+            .select('booking_id, status')
+            .in('booking_id', bookingIds)
+            .in('status', ['open', 'under_review'])
+        : { data: [] as { booking_id: string; status: string }[] };
+      const disputedSet = new Set((activeDisputes || []).map((d) => d.booking_id));
+
       const bookingsWithData = await Promise.all(
         (data || []).map(async (booking) => {
           const { data: serviceData } = await supabase
@@ -90,7 +101,8 @@ const Bookings = () => {
           return {
             ...booking,
             services: serviceData || { title: '', duration_hours: 0 },
-            profiles: profileData || { first_name: '', last_name: '', avatar_url: '', location: '' }
+            profiles: profileData || { first_name: '', last_name: '', avatar_url: '', location: '' },
+            has_active_dispute: disputedSet.has(booking.id),
           };
         })
       );
@@ -470,7 +482,7 @@ const Bookings = () => {
                     </Button>
                   )}
                   
-                  {booking.status === 'complete' && (
+                  {booking.status === 'complete' && !booking.has_active_dispute && (
                     <Button
                       size="sm"
                       onClick={async () => {
@@ -488,6 +500,12 @@ const Bookings = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Confirm Completion
                     </Button>
+                  )}
+
+                  {booking.has_active_dispute && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Locked: dispute under review
+                    </Badge>
                   )}
 
                   {['work_started','complete','client_confirmed','disputed'].includes(booking.status) && (
