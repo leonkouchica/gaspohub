@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock } from "lucide-react";
+import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock } from "lucide-react";
 import { format } from "date-fns";
 
 type Resolution = "refund_full" | "refund_partial" | "release_to_photographer" | "close_no_action";
@@ -314,5 +314,3 @@ export function DisputeManagement() {
     </Card>
   );
 }
-
-export { AlertTriangle as _ } ;
