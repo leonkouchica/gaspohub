@@ -273,6 +273,68 @@ export type Database = {
         }
         Relationships: []
       }
+      disputes: {
+        Row: {
+          admin_notes: string | null
+          booking_id: string
+          created_at: string
+          description: string | null
+          evidence_urls: string[]
+          id: string
+          raised_by: string
+          raised_by_role: string
+          reason: string
+          resolution: string | null
+          resolution_amount: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          booking_id: string
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[]
+          id?: string
+          raised_by: string
+          raised_by_role: string
+          reason: string
+          resolution?: string | null
+          resolution_amount?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          booking_id?: string
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[]
+          id?: string
+          raised_by?: string
+          raised_by_role?: string
+          reason?: string
+          resolution?: string | null
+          resolution_amount?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_settings: {
         Row: {
           api_key: string | null
