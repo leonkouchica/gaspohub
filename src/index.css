@@ -47,8 +47,13 @@ All colors MUST be HSL.
     --info-foreground: 0 0% 98%;
 
     /* Gradients and effects */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    --primary-glow: 14 95% 62%;
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    --gradient-hero: radial-gradient(ellipse at top, hsl(var(--primary) / 0.15), transparent 60%);
     --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.06), 0 8px 24px -8px hsl(0 0% 0% / 0.08);
+    --shadow-glow: 0 0 40px -8px hsl(var(--primary) / 0.45);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
@@ -97,6 +102,8 @@ All colors MUST be HSL.
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 0 84% 60%;
+    --primary-glow: 14 95% 70%;
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.4), 0 8px 24px -8px hsl(0 0% 0% / 0.5);
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 0 84% 60%;

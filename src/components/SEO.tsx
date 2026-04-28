@@ -11,10 +11,10 @@ interface SEOProps {
 }
 
 const defaultMeta = {
-  siteName: 'PhotoPro Marketplace',
-  title: 'PhotoPro - Find & Book Professional Photographers',
-  description: 'Connect with talented photographers for weddings, portraits, events, and more. Browse portfolios, book sessions, and shop prints.',
-  keywords: 'photography, photographers, book photographer, wedding photography, portrait photography, photo prints',
+  siteName: 'GaspoHub',
+  title: 'GaspoHub – Book Professional Photographers & Shop Prints',
+  description: 'GaspoHub connects clients with vetted professional photographers for weddings, events, and portraits. Secure escrow payments, verified reviews.',
+  keywords: 'photography marketplace, book photographer, wedding photographer, event photography, portrait photographer, photo prints',
   image: '/og-image.jpg',
   url: typeof window !== 'undefined' ? window.location.origin : '',
 };
