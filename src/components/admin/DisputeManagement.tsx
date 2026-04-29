@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock } from "lucide-react";
+import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock, Download, ZoomIn, FileText, File as FileIcon } from "lucide-react";
 import { format } from "date-fns";
 import {
   validateResolvePayload,
