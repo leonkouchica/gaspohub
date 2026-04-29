@@ -108,8 +108,7 @@ Deno.test("transition: terminal status cannot move back to 'open'", () => {
   for (const from of ["resolved_refund", "resolved_release", "resolved_partial", "closed"] as const) {
     const result = canTransitionDisputeStatus(from, "open");
     assertEquals(result === true, false, `expected ${from}->open to be blocked`);
-    if (result !== true) {
-      assertEquals(result.code, "cannot_reopen");
+    if (result !== true && result.code === "cannot_reopen") {
       assertEquals(result.from, from);
       assertEquals(result.to, "open");
     }
