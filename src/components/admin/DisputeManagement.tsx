@@ -18,7 +18,7 @@ import {
   isTerminalStatus,
   type DisputeStatus,
   type Resolution as SharedResolution,
-} from "../../../supabase/functions/_shared/dispute-resolution";
+} from "@/lib/disputeResolution";
 
 type Resolution = SharedResolution;
 
