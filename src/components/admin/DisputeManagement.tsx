@@ -73,6 +73,72 @@ export function DisputeManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Cache of stored-evidence-URL -> short-lived signed URL (preview).
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [signingKey, setSigningKey] = useState<string | null>(null);
+
+  // Reset signed-URL cache when switching disputes — they're scoped per dispute.
+  useEffect(() => {
+    setSignedUrls({});
+  }, [selected?.id]);
+
+  /**
+   * Mints (or returns cached) short-lived signed URL via the admin-only edge function.
+   * `download=true` requests a Content-Disposition: attachment URL which we never cache
+   * (the inline preview URL has different headers).
+   */
+  const getSignedUrl = async (
+    storedUrl: string,
+    opts?: { download?: boolean },
+  ): Promise<string | null> => {
+    if (!selected) return null;
+    if (!opts?.download && signedUrls[storedUrl]) return signedUrls[storedUrl];
+    const { data, error } = await supabase.functions.invoke("sign-evidence-url", {
+      body: { disputeId: selected.id, url: storedUrl, download: !!opts?.download },
+    });
+    if (error || !data?.url) {
+      toast({
+        title: "Cannot access evidence",
+        description: error?.message || data?.error || "Failed to sign URL",
+        variant: "destructive",
+      });
+      return null;
+    }
+    if (!opts?.download) {
+      setSignedUrls((prev) => ({ ...prev, [storedUrl]: data.url as string }));
+    }
+    return data.url as string;
+  };
+
+  // Auto-fetch signed URLs for image thumbnails when a dispute opens.
+  useEffect(() => {
+    if (!selected) return;
+    const imageUrls = selected.evidence_urls.filter((u) => getFileKind(u) === "image");
+    imageUrls.forEach((u) => {
+      if (!signedUrls[u]) void getSignedUrl(u);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  const openPreview = async (storedUrl: string) => {
+    setSigningKey(storedUrl);
+    try {
+      const url = await getSignedUrl(storedUrl);
+      if (url) setPreviewUrl(url);
+    } finally {
+      setSigningKey(null);
+    }
+  };
+
+  const triggerDownload = async (storedUrl: string) => {
+    setSigningKey(storedUrl + ":dl");
+    try {
+      const url = await getSignedUrl(storedUrl, { download: true });
+      if (url) window.open(url, "_blank", "noopener");
+    } finally {
+      setSigningKey(null);
+    }
+  };
 
   const getFileKind = (url: string): "image" | "pdf" | "other" => {
     try {
