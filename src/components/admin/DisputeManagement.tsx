@@ -73,6 +73,72 @@ export function DisputeManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Cache of stored-evidence-URL -> short-lived signed URL (preview).
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [signingKey, setSigningKey] = useState<string | null>(null);
+
+  // Reset signed-URL cache when switching disputes — they're scoped per dispute.
+  useEffect(() => {
+    setSignedUrls({});
+  }, [selected?.id]);
+
+  /**
+   * Mints (or returns cached) short-lived signed URL via the admin-only edge function.
+   * `download=true` requests a Content-Disposition: attachment URL which we never cache
+   * (the inline preview URL has different headers).
+   */
+  const getSignedUrl = async (
+    storedUrl: string,
+    opts?: { download?: boolean },
+  ): Promise<string | null> => {
+    if (!selected) return null;
+    if (!opts?.download && signedUrls[storedUrl]) return signedUrls[storedUrl];
+    const { data, error } = await supabase.functions.invoke("sign-evidence-url", {
+      body: { disputeId: selected.id, url: storedUrl, download: !!opts?.download },
+    });
+    if (error || !data?.url) {
+      toast({
+        title: "Cannot access evidence",
+        description: error?.message || data?.error || "Failed to sign URL",
+        variant: "destructive",
+      });
+      return null;
+    }
+    if (!opts?.download) {
+      setSignedUrls((prev) => ({ ...prev, [storedUrl]: data.url as string }));
+    }
+    return data.url as string;
+  };
+
+  // Auto-fetch signed URLs for image thumbnails when a dispute opens.
+  useEffect(() => {
+    if (!selected) return;
+    const imageUrls = selected.evidence_urls.filter((u) => getFileKind(u) === "image");
+    imageUrls.forEach((u) => {
+      if (!signedUrls[u]) void getSignedUrl(u);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  const openPreview = async (storedUrl: string) => {
+    setSigningKey(storedUrl);
+    try {
+      const url = await getSignedUrl(storedUrl);
+      if (url) setPreviewUrl(url);
+    } finally {
+      setSigningKey(null);
+    }
+  };
+
+  const triggerDownload = async (storedUrl: string) => {
+    setSigningKey(storedUrl + ":dl");
+    try {
+      const url = await getSignedUrl(storedUrl, { download: true });
+      if (url) window.open(url, "_blank", "noopener");
+    } finally {
+      setSigningKey(null);
+    }
+  };
 
   const getFileKind = (url: string): "image" | "pdf" | "other" => {
     try {
@@ -323,37 +389,49 @@ export function DisputeManagement() {
                       {selected.evidence_urls.map((u, i) => {
                         const kind = getFileKind(u);
                         const name = getFileName(u);
+                        const signedSrc = signedUrls[u];
+                        const isSigning = signingKey === u;
+                        const isDownloading = signingKey === u + ":dl";
                         return (
                           <div key={i} className="rounded border overflow-hidden bg-muted/30 flex flex-col">
                             <div className="relative h-40 bg-muted flex items-center justify-center overflow-hidden">
                               {kind === "image" ? (
                                 <>
-                                  <img
-                                    src={u}
-                                    alt={`Evidence ${i + 1}`}
-                                    loading="lazy"
-                                    className="h-full w-full object-cover cursor-zoom-in"
-                                    onClick={() => setPreviewUrl(u)}
-                                  />
+                                  {signedSrc ? (
+                                    <img
+                                      src={signedSrc}
+                                      alt={`Evidence ${i + 1}`}
+                                      loading="lazy"
+                                      className="h-full w-full object-cover cursor-zoom-in"
+                                      onClick={() => openPreview(u)}
+                                    />
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                                      <Loader2 className="h-5 w-5 animate-spin" />
+                                      <span>Loading…</span>
+                                    </div>
+                                  )}
                                   <Button
                                     type="button"
                                     size="icon"
                                     variant="secondary"
                                     className="absolute top-1 right-1 h-7 w-7"
-                                    onClick={() => setPreviewUrl(u)}
+                                    onClick={() => openPreview(u)}
+                                    disabled={isSigning}
                                     aria-label="Zoom evidence"
                                   >
-                                    <ZoomIn className="h-4 w-4" />
+                                    {isSigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ZoomIn className="h-4 w-4" />}
                                   </Button>
                                 </>
                               ) : kind === "pdf" ? (
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewUrl(u)}
+                                  onClick={() => openPreview(u)}
+                                  disabled={isSigning}
                                   className="flex flex-col items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                                 >
-                                  <FileText className="h-10 w-10" />
-                                  <span>Preview PDF</span>
+                                  {isSigning ? <Loader2 className="h-10 w-10 animate-spin" /> : <FileText className="h-10 w-10" />}
+                                  <span>{isSigning ? "Signing…" : "Preview PDF"}</span>
                                 </button>
                               ) : (
                                 <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
@@ -365,25 +443,24 @@ export function DisputeManagement() {
                             <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
                               <span className="truncate" title={name}>#{i + 1} · {name}</span>
                               <div className="flex items-center gap-1 shrink-0">
-                                <a
-                                  href={u}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
-                                  aria-label="Open in new tab"
+                                <button
+                                  type="button"
+                                  onClick={() => openPreview(u)}
+                                  disabled={isSigning}
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted disabled:opacity-50"
+                                  aria-label="Open"
                                 >
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                </a>
-                                <a
-                                  href={u}
-                                  download={name}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
+                                  {isSigning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => triggerDownload(u)}
+                                  disabled={isDownloading}
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted disabled:opacity-50"
                                   aria-label="Download"
                                 >
-                                  <Download className="h-3.5 w-3.5" />
-                                </a>
+                                  {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                                </button>
                               </div>
                             </div>
                           </div>
