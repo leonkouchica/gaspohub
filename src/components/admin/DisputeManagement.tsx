@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock } from "lucide-react";
+import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock, Download, ZoomIn, FileText, File as FileIcon } from "lucide-react";
 import { format } from "date-fns";
 import {
   validateResolvePayload,
@@ -72,6 +72,26 @@ export function DisputeManagement() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const getFileKind = (url: string): "image" | "pdf" | "other" => {
+    try {
+      const clean = url.split("?")[0].split("#")[0].toLowerCase();
+      if (/\.(png|jpe?g|gif|webp|bmp|svg|avif)$/.test(clean)) return "image";
+      if (clean.endsWith(".pdf")) return "pdf";
+    } catch { /* ignore */ }
+    return "other";
+  };
+
+  const getFileName = (url: string): string => {
+    try {
+      const u = new URL(url);
+      const name = u.pathname.split("/").pop();
+      return name || url;
+    } catch {
+      return url.split("/").pop() || url;
+    }
+  };
 
   const fetchDisputes = async () => {
     setLoading(true);
@@ -299,12 +319,76 @@ export function DisputeManagement() {
                   {selected.evidence_urls.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No evidence attached.</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {selected.evidence_urls.map((u, i) => (
-                        <a key={i} href={u} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded border px-2 py-1 text-sm hover:bg-muted">
-                          <ExternalLink className="h-4 w-4" /> Evidence #{i + 1}
-                        </a>
-                      ))}
+                    <div className="grid grid-cols-2 gap-3">
+                      {selected.evidence_urls.map((u, i) => {
+                        const kind = getFileKind(u);
+                        const name = getFileName(u);
+                        return (
+                          <div key={i} className="rounded border overflow-hidden bg-muted/30 flex flex-col">
+                            <div className="relative h-40 bg-muted flex items-center justify-center overflow-hidden">
+                              {kind === "image" ? (
+                                <>
+                                  <img
+                                    src={u}
+                                    alt={`Evidence ${i + 1}`}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover cursor-zoom-in"
+                                    onClick={() => setPreviewUrl(u)}
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute top-1 right-1 h-7 w-7"
+                                    onClick={() => setPreviewUrl(u)}
+                                    aria-label="Zoom evidence"
+                                  >
+                                    <ZoomIn className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : kind === "pdf" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewUrl(u)}
+                                  className="flex flex-col items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                                >
+                                  <FileText className="h-10 w-10" />
+                                  <span>Preview PDF</span>
+                                </button>
+                              ) : (
+                                <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+                                  <FileIcon className="h-10 w-10" />
+                                  <span>File</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+                              <span className="truncate" title={name}>#{i + 1} · {name}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <a
+                                  href={u}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
+                                  aria-label="Open in new tab"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                                <a
+                                  href={u}
+                                  download={name}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
+                                  aria-label="Download"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -373,6 +457,61 @@ export function DisputeManagement() {
                 )}
               </DialogFooter>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] overflow-hidden p-0">
+          {previewUrl && (
+            <div className="flex flex-col h-[90vh]">
+              <DialogHeader className="px-4 py-3 border-b">
+                <DialogTitle className="text-sm flex items-center justify-between gap-2">
+                  <span className="truncate">{getFileName(previewUrl)}</span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs rounded border px-2 py-1 hover:bg-muted"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Open
+                    </a>
+                    <a
+                      href={previewUrl}
+                      download={getFileName(previewUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs rounded border px-2 py-1 hover:bg-muted"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download
+                    </a>
+                  </span>
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 overflow-auto bg-muted">
+                {getFileKind(previewUrl) === "image" ? (
+                  <div className="min-h-full flex items-center justify-center p-2">
+                    <img
+                      src={previewUrl}
+                      alt="Evidence preview"
+                      className="max-w-none"
+                      style={{ imageRendering: "auto" }}
+                    />
+                  </div>
+                ) : getFileKind(previewUrl) === "pdf" ? (
+                  <iframe
+                    src={previewUrl}
+                    title="PDF preview"
+                    className="w-full h-full bg-background"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                    Preview not available. Use Download to view this file.
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
