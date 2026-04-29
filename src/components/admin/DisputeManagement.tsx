@@ -460,6 +460,61 @@ export function DisputeManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] overflow-hidden p-0">
+          {previewUrl && (
+            <div className="flex flex-col h-[90vh]">
+              <DialogHeader className="px-4 py-3 border-b">
+                <DialogTitle className="text-sm flex items-center justify-between gap-2">
+                  <span className="truncate">{getFileName(previewUrl)}</span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs rounded border px-2 py-1 hover:bg-muted"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Open
+                    </a>
+                    <a
+                      href={previewUrl}
+                      download={getFileName(previewUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs rounded border px-2 py-1 hover:bg-muted"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download
+                    </a>
+                  </span>
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 overflow-auto bg-muted">
+                {getFileKind(previewUrl) === "image" ? (
+                  <div className="min-h-full flex items-center justify-center p-2">
+                    <img
+                      src={previewUrl}
+                      alt="Evidence preview"
+                      className="max-w-none"
+                      style={{ imageRendering: "auto" }}
+                    />
+                  </div>
+                ) : getFileKind(previewUrl) === "pdf" ? (
+                  <iframe
+                    src={previewUrl}
+                    title="PDF preview"
+                    className="w-full h-full bg-background"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                    Preview not available. Use Download to view this file.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
