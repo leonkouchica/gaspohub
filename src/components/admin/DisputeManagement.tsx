@@ -12,8 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, Loader2, Scale, ShieldAlert, ExternalLink, Lock } from "lucide-react";
 import { format } from "date-fns";
+import {
+  validateResolvePayload,
+  canTransitionDisputeStatus,
+  isTerminalStatus,
+  type DisputeStatus,
+  type Resolution as SharedResolution,
+} from "@/lib/disputeResolution";
 
-type Resolution = "refund_full" | "refund_partial" | "release_to_photographer" | "close_no_action";
+type Resolution = SharedResolution;
 
 interface Dispute {
   id: string;
@@ -64,6 +71,7 @@ export function DisputeManagement() {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const fetchDisputes = async () => {
     setLoading(true);
@@ -98,9 +106,23 @@ export function DisputeManagement() {
     setResolution("close_no_action");
     setAmount(d.bookings?.total_amount ? String(d.bookings.total_amount) : "");
     setNotes("");
+    setValidationError(null);
   };
 
   const markUnderReview = async (d: Dispute) => {
+    // Guard against illegal status transitions (e.g. terminal -> open/under_review).
+    const transition = canTransitionDisputeStatus(
+      d.status as DisputeStatus,
+      "under_review",
+    );
+    if (transition !== true) {
+      toast({
+        title: "Invalid transition",
+        description: `Cannot move dispute from ${d.status} back to under_review.`,
+        variant: "destructive",
+      });
+      return;
+    }
     if (d.status !== "open") return;
     const { error } = await supabase.from("disputes").update({ status: "under_review" }).eq("id", d.id);
     if (error) {
@@ -110,8 +132,42 @@ export function DisputeManagement() {
     }
   };
 
+  const ERROR_MESSAGES: Record<string, string> = {
+    missing_fields: "Resolution is required.",
+    unknown_resolution: "Pick a valid resolution outcome.",
+    invalid_partial_amount: "Enter a refund amount greater than 0 and no more than the booking total.",
+    already_resolved: "This dispute is already resolved and cannot be edited.",
+    cannot_reopen: "A resolved dispute cannot be reopened.",
+  };
+
+  const computeValidationError = (): string | null => {
+    if (!selected) return null;
+    const total = Number(selected.bookings?.total_amount ?? 0);
+    const err = validateResolvePayload({
+      disputeId: selected.id,
+      resolution,
+      resolutionAmount: resolution === "refund_partial" ? parseFloat(amount) : undefined,
+      total,
+      currentStatus: selected.status as DisputeStatus,
+    });
+    return err ? ERROR_MESSAGES[err.code] ?? "Invalid input." : null;
+  };
+
+  // Re-validate as inputs change so the Apply button stays in sync.
+  useEffect(() => {
+    if (!selected) return;
+    setValidationError(computeValidationError());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, resolution, amount]);
+
   const submit = async () => {
     if (!selected) return;
+    const err = computeValidationError();
+    if (err) {
+      setValidationError(err);
+      toast({ title: "Cannot save", description: err, variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {
@@ -253,7 +309,7 @@ export function DisputeManagement() {
                   )}
                 </div>
 
-                {!["resolved_refund","resolved_partial","resolved_release","closed"].includes(selected.status) && (
+                {!isTerminalStatus(selected.status as DisputeStatus) && (
                   <>
                     {selected.status === "open" && (
                       <Button variant="secondary" size="sm" onClick={() => markUnderReview(selected)}>
@@ -286,6 +342,15 @@ export function DisputeManagement() {
                       <Label>Admin notes</Label>
                       <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Internal notes / message to parties" />
                     </div>
+
+                    {validationError && (
+                      <div
+                        role="alert"
+                        className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                      >
+                        {validationError}
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -301,8 +366,8 @@ export function DisputeManagement() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
-                {!["resolved_refund","resolved_partial","resolved_release","closed"].includes(selected.status) && (
-                  <Button onClick={submit} disabled={submitting}>
+                {!isTerminalStatus(selected.status as DisputeStatus) && (
+                  <Button onClick={submit} disabled={submitting || !!validationError}>
                     {submitting ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Applying…</> : "Apply resolution"}
                   </Button>
                 )}
