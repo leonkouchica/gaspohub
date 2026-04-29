@@ -72,6 +72,26 @@ export function DisputeManagement() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const getFileKind = (url: string): "image" | "pdf" | "other" => {
+    try {
+      const clean = url.split("?")[0].split("#")[0].toLowerCase();
+      if (/\.(png|jpe?g|gif|webp|bmp|svg|avif)$/.test(clean)) return "image";
+      if (clean.endsWith(".pdf")) return "pdf";
+    } catch { /* ignore */ }
+    return "other";
+  };
+
+  const getFileName = (url: string): string => {
+    try {
+      const u = new URL(url);
+      const name = u.pathname.split("/").pop();
+      return name || url;
+    } catch {
+      return url.split("/").pop() || url;
+    }
+  };
 
   const fetchDisputes = async () => {
     setLoading(true);
