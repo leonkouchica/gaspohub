@@ -319,12 +319,76 @@ export function DisputeManagement() {
                   {selected.evidence_urls.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No evidence attached.</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {selected.evidence_urls.map((u, i) => (
-                        <a key={i} href={u} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded border px-2 py-1 text-sm hover:bg-muted">
-                          <ExternalLink className="h-4 w-4" /> Evidence #{i + 1}
-                        </a>
-                      ))}
+                    <div className="grid grid-cols-2 gap-3">
+                      {selected.evidence_urls.map((u, i) => {
+                        const kind = getFileKind(u);
+                        const name = getFileName(u);
+                        return (
+                          <div key={i} className="rounded border overflow-hidden bg-muted/30 flex flex-col">
+                            <div className="relative h-40 bg-muted flex items-center justify-center overflow-hidden">
+                              {kind === "image" ? (
+                                <>
+                                  <img
+                                    src={u}
+                                    alt={`Evidence ${i + 1}`}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover cursor-zoom-in"
+                                    onClick={() => setPreviewUrl(u)}
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute top-1 right-1 h-7 w-7"
+                                    onClick={() => setPreviewUrl(u)}
+                                    aria-label="Zoom evidence"
+                                  >
+                                    <ZoomIn className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : kind === "pdf" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewUrl(u)}
+                                  className="flex flex-col items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                                >
+                                  <FileText className="h-10 w-10" />
+                                  <span>Preview PDF</span>
+                                </button>
+                              ) : (
+                                <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+                                  <FileIcon className="h-10 w-10" />
+                                  <span>File</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+                              <span className="truncate" title={name}>#{i + 1} · {name}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <a
+                                  href={u}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
+                                  aria-label="Open in new tab"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                                <a
+                                  href={u}
+                                  download={name}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-muted"
+                                  aria-label="Download"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
