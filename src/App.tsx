@@ -37,6 +37,9 @@ import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import PortfolioManagement from "./pages/PortfolioManagement";
 import Favorites from "./pages/Favorites";
+import SavedSearches from "./pages/SavedSearches";
+import Quotes from "./pages/Quotes";
+import Verification from "./pages/Verification";
 import Install from "./pages/Install";
 import About from "./pages/About";
 import HelpCenter from "./pages/HelpCenter";
@@ -125,6 +128,9 @@ const App = () => (
                 <Route path="download" element={<DigitalDownload />} />
                 <Route path="portfolio" element={<PortfolioManagement />} />
                 <Route path="favorites" element={<Favorites />} />
+                <Route path="saved-searches" element={<SavedSearches />} />
+                <Route path="quotes" element={<Quotes />} />
+                <Route path="verification" element={<Verification />} />
               </Route>
               
               {/* Protected checkout */}
