@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          properties: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           admin_review_notes: string | null
@@ -273,6 +300,33 @@ export type Database = {
         }
         Relationships: []
       }
+      currency_rates: {
+        Row: {
+          code: string
+          is_active: boolean
+          name: string
+          rate_to_usd: number
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          is_active?: boolean
+          name: string
+          rate_to_usd: number
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          is_active?: boolean
+          name?: string
+          rate_to_usd?: number
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           admin_notes: string | null
@@ -392,6 +446,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           booking_id: string | null
@@ -432,6 +513,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          event_key: string
+          id: string
+          is_enabled: boolean
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          event_key: string
+          id?: string
+          is_enabled?: boolean
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          event_key?: string
+          id?: string
+          is_enabled?: boolean
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -583,6 +697,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_schedules: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          due_at: string | null
+          id: string
+          installment_number: number
+          paid_at: string | null
+          percentage: number
+          status: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          installment_number: number
+          paid_at?: string | null
+          percentage: number
+          status?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          installment_number?: number
+          paid_at?: string | null
+          percentage?: number
+          status?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           account_name: string | null
@@ -619,9 +769,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_methods: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          is_default: boolean
+          is_verified: boolean
+          method_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_default?: boolean
+          is_verified?: boolean
+          method_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_default?: boolean
+          is_verified?: boolean
+          method_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payouts: {
         Row: {
           amount: number
+          approval_batch_id: string | null
+          approved_at: string | null
+          approved_by: string | null
           booking_id: string | null
           completed_at: string | null
           created_at: string | null
@@ -639,6 +825,9 @@ export type Database = {
         }
         Insert: {
           amount: number
+          approval_batch_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           booking_id?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -656,6 +845,9 @@ export type Database = {
         }
         Update: {
           amount?: number
+          approval_batch_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           booking_id?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -726,37 +918,151 @@ export type Database = {
       }
       photographer_profiles: {
         Row: {
+          avg_response_minutes: number | null
           created_at: string | null
           gear: string[] | null
           id: string
           is_approved: boolean | null
+          is_verified: boolean
+          latitude: number | null
+          longitude: number | null
+          on_time_delivery_rate: number | null
           portfolio_images: string[] | null
+          service_radius_km: number | null
           social_links: Json | null
           specialties: string[] | null
+          total_completed_bookings: number
           updated_at: string | null
           user_id: string
+          verified_at: string | null
         }
         Insert: {
+          avg_response_minutes?: number | null
           created_at?: string | null
           gear?: string[] | null
           id?: string
           is_approved?: boolean | null
+          is_verified?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          on_time_delivery_rate?: number | null
           portfolio_images?: string[] | null
+          service_radius_km?: number | null
           social_links?: Json | null
           specialties?: string[] | null
+          total_completed_bookings?: number
           updated_at?: string | null
           user_id: string
+          verified_at?: string | null
         }
         Update: {
+          avg_response_minutes?: number | null
           created_at?: string | null
           gear?: string[] | null
           id?: string
           is_approved?: boolean | null
+          is_verified?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          on_time_delivery_rate?: number | null
           portfolio_images?: string[] | null
+          service_radius_km?: number | null
           social_links?: Json | null
           specialties?: string[] | null
+          total_completed_bookings?: number
           updated_at?: string | null
           user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      photographer_verifications: {
+        Row: {
+          created_at: string
+          document_type: string
+          document_urls: string[]
+          full_name: string
+          id: string
+          photographer_id: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          selfie_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          document_urls?: string[]
+          full_name: string
+          id?: string
+          photographer_id: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          selfie_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          document_urls?: string[]
+          full_name?: string
+          id?: string
+          photographer_id?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          selfie_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portfolio_items: {
+        Row: {
+          caption: string | null
+          category: string | null
+          created_at: string
+          flagged_reason: string | null
+          id: string
+          image_url: string
+          moderated_at: string | null
+          moderation_notes: string | null
+          moderator_id: string | null
+          photographer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          flagged_reason?: string | null
+          id?: string
+          image_url: string
+          moderated_at?: string | null
+          moderation_notes?: string | null
+          moderator_id?: string | null
+          photographer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          category?: string | null
+          created_at?: string
+          flagged_reason?: string | null
+          id?: string
+          image_url?: string
+          moderated_at?: string | null
+          moderation_notes?: string | null
+          moderator_id?: string | null
+          photographer_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -847,6 +1153,113 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_requests: {
+        Row: {
+          budget: number | null
+          client_id: string
+          converted_booking_id: string | null
+          created_at: string
+          deliverables: string | null
+          duration_hours: number | null
+          expires_at: string | null
+          id: string
+          location: string | null
+          party_size: number | null
+          photographer_id: string
+          preferred_date: string | null
+          reference_urls: string[] | null
+          service_id: string | null
+          shoot_type: string
+          special_requirements: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          client_id: string
+          converted_booking_id?: string | null
+          created_at?: string
+          deliverables?: string | null
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          location?: string | null
+          party_size?: number | null
+          photographer_id: string
+          preferred_date?: string | null
+          reference_urls?: string[] | null
+          service_id?: string | null
+          shoot_type: string
+          special_requirements?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          client_id?: string
+          converted_booking_id?: string | null
+          created_at?: string
+          deliverables?: string | null
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          location?: string | null
+          party_size?: number | null
+          photographer_id?: string
+          preferred_date?: string | null
+          reference_urls?: string[] | null
+          service_id?: string | null
+          shoot_type?: string
+          special_requirements?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quote_responses: {
+        Row: {
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          photographer_id: string
+          price: number
+          quote_request_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          photographer_id: string
+          price: number
+          quote_request_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          photographer_id?: string
+          price?: number
+          quote_request_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_responses_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           booking_id: string | null
@@ -910,12 +1323,119 @@ export type Database = {
           },
         ]
       }
+      saved_search_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          matched_count: number
+          payload: Json | null
+          saved_search_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          matched_count?: number
+          payload?: Json | null
+          saved_search_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          matched_count?: number
+          payload?: Json | null
+          saved_search_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_search_alerts_saved_search_id_fkey"
+            columns: ["saved_search_id"]
+            isOneToOne: false
+            referencedRelation: "saved_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_searches: {
+        Row: {
+          alert_frequency: string
+          created_at: string
+          criteria: Json
+          id: string
+          is_paused: boolean
+          last_alert_at: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_frequency?: string
+          created_at?: string
+          criteria?: Json
+          id?: string
+          is_paused?: boolean
+          last_alert_at?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_frequency?: string
+          created_at?: string
+          criteria?: Json
+          id?: string
+          is_paused?: boolean
+          last_alert_at?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_reminders: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          event_key: string
+          id: string
+          payload: Json | null
+          send_at: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          event_key: string
+          id?: string
+          payload?: Json | null
+          send_at: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          event_key?: string
+          id?: string
+          payload?: Json | null
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
+          booking_mode: string
           created_at: string | null
+          deposit_percentage: number
           description: string | null
           duration_hours: number | null
           id: string
+          installment_count: number
           is_active: boolean | null
           photographer_id: string
           price: number
@@ -923,10 +1443,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          booking_mode?: string
           created_at?: string | null
+          deposit_percentage?: number
           description?: string | null
           duration_hours?: number | null
           id?: string
+          installment_count?: number
           is_active?: boolean | null
           photographer_id: string
           price: number
@@ -934,10 +1457,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          booking_mode?: string
           created_at?: string | null
+          deposit_percentage?: number
           description?: string | null
           duration_hours?: number | null
           id?: string
+          installment_count?: number
           is_active?: boolean | null
           photographer_id?: string
           price?: number
