@@ -7,7 +7,7 @@ import { useFeatureFlag } from "@/lib/featureFlags";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { DashboardSkeleton } from "@/components/PageSkeleton";
 import { Trash2, Pause, Play, Search } from "lucide-react";
 
 interface SavedSearch {
@@ -59,7 +59,7 @@ export default function SavedSearches() {
       </div>
     );
   }
-  if (loading) return <PageSkeleton />;
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
