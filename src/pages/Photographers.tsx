@@ -10,11 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhotographerCard } from "@/components/PhotographerCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Camera, Search, Filter, SortAsc } from "lucide-react";
+import { Camera, Search, Filter, SortAsc, Map as MapIcon, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { samplePhotographers as sharedSamplePhotographers } from "@/data/sampleData";
 import { AdvertBanner } from "@/components/AdvertBanner";
+import { MockMap } from "@/components/MockMap";
+import { SaveSearchButton } from "@/components/SaveSearchButton";
+import { useFeatureFlag } from "@/lib/featureFlags";
+import { trackEvent } from "@/lib/analytics";
 
 interface PhotographerProfile {
   id: string;
@@ -23,6 +27,10 @@ interface PhotographerProfile {
   gear: string[];
   portfolio_images: string[];
   is_approved: boolean;
+  is_verified?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  service_radius_km?: number | null;
   profiles: {
     first_name: string;
     last_name: string;
@@ -57,6 +65,10 @@ const Photographers = () => {
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [view, setView] = useState<"list" | "map">("list");
+  const [radiusKm, setRadiusKm] = useState<string>("any");
+  const mapEnabled = useFeatureFlag("map_discovery", true);
+  const savedEnabled = useFeatureFlag("saved_searches", true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,6 +78,12 @@ const Photographers = () => {
   useEffect(() => {
     filterPhotographers();
   }, [photographers, searchTerm, specialtyFilter, locationFilter, sortBy]);
+
+  useEffect(() => {
+    if (searchTerm || specialtyFilter !== "all" || locationFilter !== "all") {
+      trackEvent("photographer_search_performed", { searchTerm, specialtyFilter, locationFilter });
+    }
+  }, [searchTerm, specialtyFilter, locationFilter]);
 
   const fetchPhotographers = async () => {
     try {
@@ -322,6 +340,29 @@ const Photographers = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            {mapEnabled && (
+              <div className="inline-flex rounded-md border overflow-hidden">
+                <button onClick={() => setView("list")} className={`px-3 py-1.5 text-sm flex items-center gap-1 ${view === "list" ? "bg-primary text-primary-foreground" : "bg-background"}`}><List className="h-4 w-4" />List</button>
+                <button onClick={() => setView("map")} className={`px-3 py-1.5 text-sm flex items-center gap-1 ${view === "map" ? "bg-primary text-primary-foreground" : "bg-background"}`}><MapIcon className="h-4 w-4" />Map</button>
+              </div>
+            )}
+            {mapEnabled && (
+              <Select value={radiusKm} onValueChange={setRadiusKm}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Radius" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any distance</SelectItem>
+                  <SelectItem value="10">Within 10 km</SelectItem>
+                  <SelectItem value="25">Within 25 km</SelectItem>
+                  <SelectItem value="50">Within 50 km</SelectItem>
+                  <SelectItem value="100">Within 100 km</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {savedEnabled && (
+              <SaveSearchButton criteria={{ q: searchTerm, specialty: specialtyFilter, location: locationFilter, radiusKm }} />
+            )}
+          </div>
           
           {/* Active Filters */}
           {(searchTerm || specialtyFilter !== "all" || locationFilter !== "all") && (
@@ -375,6 +416,19 @@ const Photographers = () => {
             }
           </p>
         </div>
+      ) : view === "map" && mapEnabled ? (
+        <MockMap
+          radiusKm={radiusKm === "any" ? undefined : Number(radiusKm)}
+          pins={filteredPhotographers.map((p) => ({
+            id: p.id,
+            user_id: p.user_id,
+            name: `${p.profiles?.first_name || ""} ${p.profiles?.last_name || ""}`.trim() || "Photographer",
+            location: p.profiles?.location,
+            latitude: p.latitude ?? null,
+            longitude: p.longitude ?? null,
+            is_verified: p.is_verified,
+          }))}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPhotographers.map((photographer) => (
