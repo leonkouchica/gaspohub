@@ -990,6 +990,30 @@ const Admin = () => {
             <Wallet className="h-4 w-4" />
             Payouts
           </TabsTrigger>
+          <TabsTrigger value="bulk-payouts" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Bulk Payouts
+          </TabsTrigger>
+          <TabsTrigger value="verification" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Verification
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            Moderation
+          </TabsTrigger>
+          <TabsTrigger value="currencies" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Currencies
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="flags" className="flex items-center gap-2">
+            <Flag className="h-4 w-4" />
+            Feature Flags
+          </TabsTrigger>
           <TabsTrigger value="contact" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
             Contact
