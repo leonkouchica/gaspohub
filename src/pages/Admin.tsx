@@ -1889,6 +1889,13 @@ const Admin = () => {
         <TabsContent value="contact">
           <ContactSubmissions />
         </TabsContent>
+
+        <TabsContent value="bulk-payouts"><BulkPayoutApproval /></TabsContent>
+        <TabsContent value="verification"><VerificationQueue /></TabsContent>
+        <TabsContent value="moderation"><PortfolioModerationQueue /></TabsContent>
+        <TabsContent value="currencies"><CurrencyManager /></TabsContent>
+        <TabsContent value="templates"><NotificationTemplatesManager /></TabsContent>
+        <TabsContent value="flags"><FeatureFlagsManager /></TabsContent>
       </Tabs>
     </div>
   );
