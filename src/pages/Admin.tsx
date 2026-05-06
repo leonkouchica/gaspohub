@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image, Wallet, RefreshCw } from "lucide-react";
+import { Shield, Users, Camera, ShoppingCart, CheckCircle, XCircle, Clock, Calendar, Package, MessageSquare, Eye, EyeOff, TrendingUp, DollarSign, BarChart3, Star, CreditCard, Mail, AlertTriangle, Image, Wallet, RefreshCw, ShieldCheck, CheckSquare, Flag, Bell } from "lucide-react";
 import { DisputeManagement } from "@/components/admin/DisputeManagement";
 import { RefundManagement } from "@/components/admin/RefundManagement";
 import { PaymentGatewaySettings } from "@/components/admin/PaymentGatewaySettings";
@@ -18,6 +18,12 @@ import { EmailSettings } from "@/components/admin/EmailSettings";
 import { AdvertisementSettings } from "@/components/admin/AdvertisementSettings";
 import { PayoutReleasePanel } from "@/components/admin/PayoutReleasePanel";
 import { ContactSubmissions } from "@/components/admin/ContactSubmissions";
+import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
+import { VerificationQueue } from "@/components/admin/VerificationQueue";
+import { PortfolioModerationQueue } from "@/components/admin/PortfolioModerationQueue";
+import { CurrencyManager } from "@/components/admin/CurrencyManager";
+import { NotificationTemplatesManager } from "@/components/admin/NotificationTemplatesManager";
+import { BulkPayoutApproval } from "@/components/admin/BulkPayoutApproval";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { createNotification } from "@/lib/notifications";
@@ -984,6 +990,30 @@ const Admin = () => {
             <Wallet className="h-4 w-4" />
             Payouts
           </TabsTrigger>
+          <TabsTrigger value="bulk-payouts" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Bulk Payouts
+          </TabsTrigger>
+          <TabsTrigger value="verification" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Verification
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            Moderation
+          </TabsTrigger>
+          <TabsTrigger value="currencies" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Currencies
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="flags" className="flex items-center gap-2">
+            <Flag className="h-4 w-4" />
+            Feature Flags
+          </TabsTrigger>
           <TabsTrigger value="contact" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
             Contact
@@ -1859,6 +1889,13 @@ const Admin = () => {
         <TabsContent value="contact">
           <ContactSubmissions />
         </TabsContent>
+
+        <TabsContent value="bulk-payouts"><BulkPayoutApproval /></TabsContent>
+        <TabsContent value="verification"><VerificationQueue /></TabsContent>
+        <TabsContent value="moderation"><PortfolioModerationQueue /></TabsContent>
+        <TabsContent value="currencies"><CurrencyManager /></TabsContent>
+        <TabsContent value="templates"><NotificationTemplatesManager /></TabsContent>
+        <TabsContent value="flags"><FeatureFlagsManager /></TabsContent>
       </Tabs>
     </div>
   );
