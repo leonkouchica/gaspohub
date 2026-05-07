@@ -23,7 +23,9 @@ import {
   FileText,
   ShieldCheck,
   Flag,
-  CheckSquare
+  CheckSquare,
+  Images,
+  Globe
 } from "lucide-react";
 import {
   Sidebar,
@@ -64,6 +66,8 @@ const photographerNavigationItems = [
   { title: "Verification", url: "/dashboard/verification", icon: ShieldCheck },
   { title: "Client Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "My Jobs", url: "/dashboard/photographer-bookings", icon: Briefcase },
+  { title: "Galleries", url: "/dashboard/galleries", icon: Images },
+  { title: "Microsite", url: "/dashboard/microsite", icon: Globe },
   { title: "Availability", url: "/dashboard/availability", icon: Clock },
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
