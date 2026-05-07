@@ -473,8 +473,103 @@ export type Database = {
         }
         Relationships: []
       }
+      galleries: {
+        Row: {
+          approved_at: string | null
+          booking_id: string
+          client_id: string
+          cover_image_url: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          message: string | null
+          photographer_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          booking_id: string
+          client_id: string
+          cover_image_url?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          message?: string | null
+          photographer_id: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          booking_id?: string
+          client_id?: string
+          cover_image_url?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          message?: string | null
+          photographer_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gallery_images: {
+        Row: {
+          caption: string | null
+          client_notes: string | null
+          created_at: string
+          gallery_id: string
+          id: string
+          image_url: string
+          is_approved: boolean
+          is_favorite: boolean
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          client_notes?: string | null
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_url: string
+          is_approved?: boolean
+          is_favorite?: boolean
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          client_notes?: string | null
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_url?: string
+          is_approved?: boolean
+          is_favorite?: boolean
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
+          attachment_duration_seconds: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           booking_id: string | null
           content: string
           created_at: string | null
@@ -485,6 +580,9 @@ export type Database = {
           subject: string | null
         }
         Insert: {
+          attachment_duration_seconds?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           booking_id?: string | null
           content: string
           created_at?: string | null
@@ -495,6 +593,9 @@ export type Database = {
           subject?: string | null
         }
         Update: {
+          attachment_duration_seconds?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           booking_id?: string | null
           content?: string
           created_at?: string | null
@@ -513,6 +614,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      microsites: {
+        Row: {
+          about: string | null
+          contact_email: string | null
+          created_at: string
+          headline: string | null
+          hero_image_url: string | null
+          id: string
+          instagram: string | null
+          is_published: boolean
+          photographer_id: string
+          slug: string
+          theme_color: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          about?: string | null
+          contact_email?: string | null
+          created_at?: string
+          headline?: string | null
+          hero_image_url?: string | null
+          id?: string
+          instagram?: string | null
+          is_published?: boolean
+          photographer_id: string
+          slug: string
+          theme_color?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          about?: string | null
+          contact_email?: string | null
+          created_at?: string
+          headline?: string | null
+          hero_image_url?: string | null
+          id?: string
+          instagram?: string | null
+          is_published?: boolean
+          photographer_id?: string
+          slug?: string
+          theme_color?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       notification_templates: {
         Row: {
