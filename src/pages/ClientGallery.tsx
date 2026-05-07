@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Check, ArrowLeft } from "lucide-react";
 import { SEO } from "@/components/SEO";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { DashboardSkeleton as PageSkeleton } from "@/components/PageSkeleton";
 
 export default function ClientGallery() {
   const { id } = useParams();

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { SEO } from "@/components/SEO";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { DashboardSkeleton as PageSkeleton } from "@/components/PageSkeleton";
 import { ExternalLink, Upload } from "lucide-react";
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);

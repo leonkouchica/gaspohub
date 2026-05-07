@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Image as ImageIcon, Plus, Send, Trash2, Upload } from "lucide-react";
 import { SEO } from "@/components/SEO";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { DashboardSkeleton as PageSkeleton } from "@/components/PageSkeleton";
 
 interface Booking { id: string; client_id: string; job_details: string | null; }
 interface Gallery {
