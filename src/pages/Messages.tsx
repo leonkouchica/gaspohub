@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { VoiceRecorder, VoicePlayer } from "@/components/VoiceRecorder";
 
 interface Message {
   id: string;
@@ -25,6 +26,9 @@ interface Message {
   sender_id: string;
   recipient_id: string;
   booking_id: string | null;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  attachment_duration_seconds?: number | null;
 }
 
 interface Profile {
@@ -267,6 +271,47 @@ const Messages = () => {
     }
   };
 
+  const handleSendVoice = async (blob: Blob, durationSec: number) => {
+    if (!selectedConversation || !user) return;
+    setSending(true);
+    try {
+      const path = `${user.id}/${Date.now()}.webm`;
+      const { error: upErr } = await supabase.storage.from("voice-notes").upload(path, blob, {
+        contentType: "audio/webm",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("messages").insert({
+        sender_id: user.id,
+        recipient_id: selectedConversation,
+        content: "🎤 Voice note",
+        attachment_url: path,
+        attachment_type: "voice",
+        attachment_duration_seconds: durationSec,
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast({ title: "Failed to send voice note", description: err?.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const [voiceUrls, setVoiceUrls] = useState<Record<string, string>>({});
+  const ensureVoiceUrl = useCallback(async (msgId: string, path: string) => {
+    if (voiceUrls[msgId]) return;
+    const { data } = await supabase.storage.from("voice-notes").createSignedUrl(path, 60 * 60);
+    if (data?.signedUrl) setVoiceUrls((prev) => ({ ...prev, [msgId]: data.signedUrl }));
+  }, [voiceUrls]);
+
+  useEffect(() => {
+    selectedConv?.messages.forEach((m) => {
+      if (m.attachment_type === "voice" && m.attachment_url) {
+        ensureVoiceUrl(m.id, m.attachment_url);
+      }
+    });
+  }, [selectedConv?.messages, ensureVoiceUrl]);
+
   const handleSearchUsers = async (query: string) => {
     setUserSearch(query);
     if (query.trim().length < 2) {
@@ -489,6 +534,15 @@ const Messages = () => {
                             }`}
                           >
                             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            {msg.attachment_type === "voice" && (
+                              <div className="mt-2">
+                                {voiceUrls[msg.id] ? (
+                                  <VoicePlayer url={voiceUrls[msg.id]} />
+                                ) : (
+                                  <span className="text-xs opacity-70">Loading voice…</span>
+                                )}
+                              </div>
+                            )}
                             <p className={`text-xs mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                               {format(new Date(msg.created_at), "h:mm a")}
                             </p>
@@ -515,6 +569,7 @@ const Messages = () => {
                         }
                       }}
                     />
+                    <VoiceRecorder onRecorded={handleSendVoice} disabled={sending} />
                     <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
                       <Send className="h-4 w-4" />
                     </Button>

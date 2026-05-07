@@ -40,6 +40,10 @@ import Favorites from "./pages/Favorites";
 import SavedSearches from "./pages/SavedSearches";
 import Quotes from "./pages/Quotes";
 import Verification from "./pages/Verification";
+import PhotographerGalleries from "./pages/PhotographerGalleries";
+import ClientGallery from "./pages/ClientGallery";
+import MicrositeEditor from "./pages/MicrositeEditor";
+import MicrositePublic from "./pages/MicrositePublic";
 import Install from "./pages/Install";
 import About from "./pages/About";
 import HelpCenter from "./pages/HelpCenter";
@@ -95,6 +99,9 @@ const App = () => (
                 <Route path="privacy" element={<PrivacyPolicy />} />
                 <Route path="contact" element={<Contact />} />
               </Route>
+
+              {/* Public microsite */}
+              <Route path="/m/:slug" element={<MicrositePublic />} />
               
               {/* Install PWA Route */}
               <Route path="/install" element={<Install />} />
@@ -131,6 +138,9 @@ const App = () => (
                 <Route path="saved-searches" element={<SavedSearches />} />
                 <Route path="quotes" element={<Quotes />} />
                 <Route path="verification" element={<Verification />} />
+                <Route path="galleries" element={<PhotographerGalleries />} />
+                <Route path="galleries/:id" element={<ClientGallery />} />
+                <Route path="microsite" element={<MicrositeEditor />} />
               </Route>
               
               {/* Protected checkout */}
