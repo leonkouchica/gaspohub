@@ -33,7 +33,8 @@ export default function ClientGallery() {
 
   const toggle = async (imgId: string, field: "is_favorite" | "is_approved", value: boolean) => {
     if (!isClient) return;
-    const { error } = await supabase.from("gallery_images").update({ [field]: value }).eq("id", imgId);
+    const patch: any = { [field]: value };
+    const { error } = await supabase.from("gallery_images").update(patch).eq("id", imgId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setImages((arr) => arr.map((i) => i.id === imgId ? { ...i, [field]: value } : i));
   };
