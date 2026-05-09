@@ -4,9 +4,11 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export const AppLayout = () => {
   const { user, signOut } = useAuth();
+  usePushNotifications();
 
   return (
     <SidebarProvider>
