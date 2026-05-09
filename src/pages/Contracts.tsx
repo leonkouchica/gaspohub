@@ -109,7 +109,7 @@ export default function Contracts() {
     <>
       <SEO title="Contracts" description="View and sign service contracts for your bookings." />
       <div className="container mx-auto p-6 space-y-4">
-        <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Contracts" }]} />
+          <Breadcrumbs />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold flex items-center gap-2"><FileText className="h-6 w-6" />Contracts</h1>
           <Dialog open={open} onOpenChange={setOpen}>
