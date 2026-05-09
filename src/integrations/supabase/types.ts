@@ -270,6 +270,63 @@ export type Database = {
           },
         ]
       }
+      chargebacks: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          currency: string
+          flagged_reason: string | null
+          gateway: string | null
+          gateway_reference: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          reason: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          risk_score: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          flagged_reason?: string | null
+          gateway?: string | null
+          gateway_reference?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          flagged_reason?: string | null
+          gateway?: string | null
+          gateway_reference?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -297,6 +354,60 @@ export type Database = {
           message?: string
           name?: string
           subject?: string
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          body: string
+          booking_id: string
+          client_id: string
+          client_ip: string | null
+          client_signature: string | null
+          client_signed_at: string | null
+          created_at: string
+          id: string
+          photographer_id: string
+          photographer_ip: string | null
+          photographer_signature: string | null
+          photographer_signed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          client_id: string
+          client_ip?: string | null
+          client_signature?: string | null
+          client_signed_at?: string | null
+          created_at?: string
+          id?: string
+          photographer_id: string
+          photographer_ip?: string | null
+          photographer_signature?: string | null
+          photographer_signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          client_id?: string
+          client_ip?: string | null
+          client_signature?: string | null
+          client_signed_at?: string | null
+          created_at?: string
+          id?: string
+          photographer_id?: string
+          photographer_ip?: string | null
+          photographer_signature?: string | null
+          photographer_signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1302,6 +1413,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       quote_requests: {
         Row: {
           budget: number | null
@@ -1618,6 +1759,84 @@ export type Database = {
           price?: number
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shipments: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          label_url: string | null
+          order_id: string
+          ship_to: Json | null
+          shipped_at: string | null
+          status: string
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          label_url?: string | null
+          order_id: string
+          ship_to?: Json | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          label_url?: string | null
+          order_id?: string
+          ship_to?: Json | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tax_rates: {
+        Row: {
+          country_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          rate_percent: number
+          region_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          rate_percent?: number
+          region_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          rate_percent?: number
+          region_code?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

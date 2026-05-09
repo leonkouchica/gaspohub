@@ -22,6 +22,7 @@ import { RaiseDisputeDialog } from "@/components/disputes/RaiseDisputeDialog";
 import { Textarea } from "@/components/ui/textarea";
 import { createNotification } from "@/lib/notifications";
 import { generateInvoicePDF } from "@/lib/invoice";
+import { CalendarSyncButton } from "@/components/CalendarSyncButton";
 
 interface BookingWithDetails {
   id: string;
@@ -467,6 +468,16 @@ const Bookings = () => {
                       Message Photographer
                     </Link>
                   </Button>
+                  <CalendarSyncButton
+                    event={{
+                      id: booking.id,
+                      title: `Photoshoot: ${booking.services?.title || "Booking"}`,
+                      description: booking.job_details || "",
+                      location: booking.profiles?.location || "",
+                      start: new Date(booking.booking_date),
+                      durationHours: booking.services?.duration_hours || 1,
+                    }}
+                  />
                   
                   {(booking.status === 'requested' || booking.status === 'accepted') && (
                     <Button 

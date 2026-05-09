@@ -24,6 +24,9 @@ import { PortfolioModerationQueue } from "@/components/admin/PortfolioModeration
 import { CurrencyManager } from "@/components/admin/CurrencyManager";
 import { NotificationTemplatesManager } from "@/components/admin/NotificationTemplatesManager";
 import { BulkPayoutApproval } from "@/components/admin/BulkPayoutApproval";
+import { TaxRatesManager } from "@/components/admin/TaxRatesManager";
+import { ChargebackDashboard } from "@/components/admin/ChargebackDashboard";
+import { ShipmentManager } from "@/components/admin/ShipmentManager";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { createNotification } from "@/lib/notifications";
@@ -1018,6 +1021,15 @@ const Admin = () => {
             <Mail className="h-4 w-4" />
             Contact
           </TabsTrigger>
+          <TabsTrigger value="tax" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />Tax
+          </TabsTrigger>
+          <TabsTrigger value="chargebacks" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />Chargebacks
+          </TabsTrigger>
+          <TabsTrigger value="shipments" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />Shipments
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -1896,6 +1908,9 @@ const Admin = () => {
         <TabsContent value="currencies"><CurrencyManager /></TabsContent>
         <TabsContent value="templates"><NotificationTemplatesManager /></TabsContent>
         <TabsContent value="flags"><FeatureFlagsManager /></TabsContent>
+        <TabsContent value="tax"><TaxRatesManager /></TabsContent>
+        <TabsContent value="chargebacks"><ChargebackDashboard /></TabsContent>
+        <TabsContent value="shipments"><ShipmentManager /></TabsContent>
       </Tabs>
     </div>
   );

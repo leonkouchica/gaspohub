@@ -44,6 +44,7 @@ import PhotographerGalleries from "./pages/PhotographerGalleries";
 import ClientGallery from "./pages/ClientGallery";
 import MicrositeEditor from "./pages/MicrositeEditor";
 import MicrositePublic from "./pages/MicrositePublic";
+import Contracts from "./pages/Contracts";
 import Install from "./pages/Install";
 import About from "./pages/About";
 import HelpCenter from "./pages/HelpCenter";
@@ -141,6 +142,7 @@ const App = () => (
                 <Route path="galleries" element={<PhotographerGalleries />} />
                 <Route path="galleries/:id" element={<ClientGallery />} />
                 <Route path="microsite" element={<MicrositeEditor />} />
+                <Route path="contracts" element={<Contracts />} />
               </Route>
               
               {/* Protected checkout */}

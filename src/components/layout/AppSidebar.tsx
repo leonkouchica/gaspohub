@@ -25,7 +25,10 @@ import {
   Flag,
   CheckSquare,
   Images,
-  Globe
+  Globe,
+  Truck,
+  AlertTriangle,
+  Receipt
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,6 +49,7 @@ const navigationItems = [
   { title: "Photographers", url: "/photographers", icon: Users },
   { title: "Services", url: "/services", icon: Camera },
   { title: "My Bookings", url: "/dashboard/bookings", icon: Calendar },
+  { title: "Contracts", url: "/dashboard/contracts", icon: FileText },
   { title: "Saved Searches", url: "/dashboard/saved-searches", icon: Search },
   { title: "My Quotes", url: "/dashboard/quotes", icon: FileText },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
@@ -68,6 +72,7 @@ const photographerNavigationItems = [
   { title: "My Jobs", url: "/dashboard/photographer-bookings", icon: Briefcase },
   { title: "Galleries", url: "/dashboard/galleries", icon: Images },
   { title: "Microsite", url: "/dashboard/microsite", icon: Globe },
+  { title: "Contracts", url: "/dashboard/contracts", icon: FileText },
   { title: "Availability", url: "/dashboard/availability", icon: Clock },
   { title: "My Products", url: "/dashboard/products", icon: Package },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
@@ -98,6 +103,9 @@ const adminNavigationItems = [
   { title: "Ad Banners", url: "/dashboard/admin?tab=ads", icon: ImageIcon },
   { title: "Payment Gateway", url: "/dashboard/admin?tab=payment-gateway", icon: CreditCard },
   { title: "Currencies", url: "/dashboard/admin?tab=currencies", icon: DollarSign },
+  { title: "Tax Rates", url: "/dashboard/admin?tab=tax", icon: Receipt },
+  { title: "Chargebacks", url: "/dashboard/admin?tab=chargebacks", icon: AlertTriangle },
+  { title: "Shipments", url: "/dashboard/admin?tab=shipments", icon: Truck },
   { title: "Notif. Templates", url: "/dashboard/admin?tab=templates", icon: Bell },
   { title: "Feature Flags", url: "/dashboard/admin?tab=flags", icon: Flag },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
