@@ -156,7 +156,7 @@ export default function Checkout() {
         {
           body: {
             orderId: order.id,
-            amount: totalPrice,
+            amount: grandTotal,
             currency: 'USD',
             gateway: selectedGateway,
             customerEmail: user.email,
