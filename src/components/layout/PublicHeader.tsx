@@ -57,6 +57,7 @@ export const PublicHeader = () => {
           {/* Auth Buttons & Cart */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
+            <LanguageSwitcher />
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link to="/cart">
                 <ShoppingCart className="h-5 w-5" />
