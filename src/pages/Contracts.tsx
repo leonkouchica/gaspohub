@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SEO } from "@/components/SEO";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { FileText, PenLine, Plus } from "lucide-react";
+import { FileText, PenLine, Plus, Download } from "lucide-react";
 import { toast } from "sonner";
+import { downloadContractPdf, generateAndStoreContractPdf } from "@/lib/contractPdf";
 
 interface Contract {
   id: string;
@@ -163,6 +164,18 @@ export default function Contracts() {
                     {!mineSigned && (
                       <Button onClick={() => setSigning(c)} size="sm"><PenLine className="h-4 w-4 mr-2" />Sign</Button>
                     )}
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => downloadContractPdf(c)}>
+                        <Download className="h-4 w-4 mr-2" />Download PDF
+                      </Button>
+                      {c.status === "signed" && (
+                        <Button size="sm" variant="ghost" onClick={async () => {
+                          const url = await generateAndStoreContractPdf(c);
+                          if (url) { await supabase.from("contracts" as any).update({ pdf_url: url }).eq("id", c.id); toast.success("PDF stored"); }
+                          else toast.error("Failed to store PDF");
+                        }}>Store signed PDF</Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );

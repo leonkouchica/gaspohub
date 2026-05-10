@@ -28,7 +28,10 @@ import {
   Globe,
   Truck,
   AlertTriangle,
-  Receipt
+  Receipt,
+  Gift,
+  UserCog,
+  Lock
 } from "lucide-react";
 import {
   Sidebar,
@@ -58,6 +61,8 @@ const navigationItems = [
   { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/dashboard/profile", icon: User },
+  { title: "Security (2FA)", url: "/dashboard/security", icon: Lock },
+  { title: "Referrals", url: "/dashboard/referrals", icon: Gift },
 ];
 
 const photographerNavigationItems = [
@@ -81,6 +86,9 @@ const photographerNavigationItems = [
   { title: "Messages", url: "/dashboard/messages", icon: MessageSquare },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/dashboard/profile", icon: User },
+  { title: "Security (2FA)", url: "/dashboard/security", icon: Lock },
+  { title: "Studio Team", url: "/dashboard/team", icon: UserCog },
+  { title: "Referrals", url: "/dashboard/referrals", icon: Gift },
   { title: "Payouts", url: "/dashboard/payouts", icon: Wallet },
   { title: "Payments", url: "/dashboard/payment-settings", icon: CreditCard },
 ];

@@ -13,6 +13,7 @@ import { SEO } from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
 import { CreditCard, MapPin, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { createNotification } from "@/lib/notifications";
+import { findTaxRate, calcTax, type TaxRate } from "@/lib/tax";
 
 interface PaymentGateway {
   id: string;
@@ -39,14 +40,24 @@ export default function Checkout() {
     zip: "",
     country: "",
   });
+  const [taxRate, setTaxRate] = useState<TaxRate | null>(null);
 
   const hasPhysicalItems = items.some((item) => !item.is_digital);
   const commissionRate = 0.15;
   const commissionAmount = totalPrice * commissionRate;
+  const { tax: taxAmount, total: grandTotal } = calcTax(totalPrice, taxRate?.rate_percent || 0);
 
   useEffect(() => {
     fetchPaymentGateways();
   }, []);
+
+  useEffect(() => {
+    if (shippingAddress.country) {
+      findTaxRate(shippingAddress.country, shippingAddress.state).then(setTaxRate);
+    } else {
+      setTaxRate(null);
+    }
+  }, [shippingAddress.country, shippingAddress.state]);
 
   const fetchPaymentGateways = async () => {
     const { data, error } = await supabase
@@ -112,11 +123,13 @@ export default function Checkout() {
         .from("orders")
         .insert({
           client_id: user.id,
-          total_amount: totalPrice,
+          total_amount: grandTotal,
           commission_amount: commissionAmount,
           shipping_address: hasPhysicalItems ? shippingAddress : null,
           status: "pending",
-        })
+          tax_amount: taxAmount,
+          tax_rate_id: taxRate?.id ?? null,
+        } as any)
         .select()
         .single();
 
@@ -143,7 +156,7 @@ export default function Checkout() {
         {
           body: {
             orderId: order.id,
-            amount: totalPrice,
+            amount: grandTotal,
             currency: 'USD',
             gateway: selectedGateway,
             customerEmail: user.email,
@@ -409,9 +422,17 @@ export default function Checkout() {
                   </div>
                 ))}
                 <Separator />
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>{taxRate ? `${taxRate.label} (${taxRate.rate_percent}%)` : "Tax"}</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${grandTotal.toFixed(2)}</span>
                 </div>
               </CardContent>
               <CardFooter>
@@ -426,7 +447,7 @@ export default function Checkout() {
                       Processing...
                     </>
                   ) : (
-                    `Pay $${totalPrice.toFixed(2)}`
+                    `Pay $${grandTotal.toFixed(2)}`
                   )}
                 </Button>
               </CardFooter>

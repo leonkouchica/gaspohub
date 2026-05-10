@@ -146,6 +146,8 @@ export type Database = {
           refunded_at: string | null
           service_id: string
           status: string | null
+          tax_amount: number | null
+          tax_rate_id: string | null
           total_amount: number
           updated_at: string | null
           work_completed_at: string | null
@@ -183,6 +185,8 @@ export type Database = {
           refunded_at?: string | null
           service_id: string
           status?: string | null
+          tax_amount?: number | null
+          tax_rate_id?: string | null
           total_amount: number
           updated_at?: string | null
           work_completed_at?: string | null
@@ -220,6 +224,8 @@ export type Database = {
           refunded_at?: string | null
           service_id?: string
           status?: string | null
+          tax_amount?: number | null
+          tax_rate_id?: string | null
           total_amount?: number
           updated_at?: string | null
           work_completed_at?: string | null
@@ -367,6 +373,7 @@ export type Database = {
           client_signed_at: string | null
           created_at: string
           id: string
+          pdf_url: string | null
           photographer_id: string
           photographer_ip: string | null
           photographer_signature: string | null
@@ -384,6 +391,7 @@ export type Database = {
           client_signed_at?: string | null
           created_at?: string
           id?: string
+          pdf_url?: string | null
           photographer_id: string
           photographer_ip?: string | null
           photographer_signature?: string | null
@@ -401,6 +409,7 @@ export type Database = {
           client_signed_at?: string | null
           created_at?: string
           id?: string
+          pdf_url?: string | null
           photographer_id?: string
           photographer_ip?: string | null
           photographer_signature?: string | null
@@ -676,6 +685,42 @@ export type Database = {
           },
         ]
       }
+      gallery_settings: {
+        Row: {
+          allow_downloads: boolean
+          created_at: string
+          download_count: number
+          download_limit: number
+          gallery_id: string
+          id: string
+          updated_at: string
+          watermark_enabled: boolean
+          watermark_text: string | null
+        }
+        Insert: {
+          allow_downloads?: boolean
+          created_at?: string
+          download_count?: number
+          download_limit?: number
+          gallery_id: string
+          id?: string
+          updated_at?: string
+          watermark_enabled?: boolean
+          watermark_text?: string | null
+        }
+        Update: {
+          allow_downloads?: boolean
+          created_at?: string
+          download_count?: number
+          download_limit?: number
+          gallery_id?: string
+          id?: string
+          updated_at?: string
+          watermark_enabled?: boolean
+          watermark_text?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           attachment_duration_seconds: number | null
@@ -899,6 +944,8 @@ export type Database = {
           id: string
           shipping_address: Json | null
           status: string | null
+          tax_amount: number | null
+          tax_rate_id: string | null
           total_amount: number
           updated_at: string | null
         }
@@ -909,6 +956,8 @@ export type Database = {
           id?: string
           shipping_address?: Json | null
           status?: string | null
+          tax_amount?: number | null
+          tax_rate_id?: string | null
           total_amount: number
           updated_at?: string | null
         }
@@ -919,6 +968,8 @@ export type Database = {
           id?: string
           shipping_address?: Json | null
           status?: string | null
+          tax_amount?: number | null
+          tax_rate_id?: string | null
           total_amount?: number
           updated_at?: string | null
         }
@@ -1550,6 +1601,66 @@ export type Database = {
           },
         ]
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          reward_percent: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reward_percent?: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reward_percent?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          referred_user_id: string
+          referrer_id: string
+          reward_amount: number | null
+          rewarded_at: string | null
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          referred_user_id: string
+          referrer_id: string
+          reward_amount?: number | null
+          rewarded_at?: string | null
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+          referrer_id?: string
+          reward_amount?: number | null
+          rewarded_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string | null
@@ -1807,6 +1918,68 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string | null
+          member_role: string
+          status: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          member_role?: string
+          status?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          member_role?: string
+          status?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "studio_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_rates: {
         Row: {
           country_code: string
@@ -1840,6 +2013,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_locale: {
+        Row: {
+          locale: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          locale?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          locale?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1857,6 +2048,45 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_two_factor: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_verified_at: string | null
+          method: string
+          phone: string | null
+          secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_verified_at?: string | null
+          method?: string
+          phone?: string | null
+          secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_verified_at?: string | null
+          method?: string
+          phone?: string | null
+          secret?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

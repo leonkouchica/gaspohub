@@ -101,6 +101,17 @@ export const AuthForm = () => {
         });
       }
     } else {
+      // Capture referral code from URL (?ref=CODE)
+      try {
+        const refCode = new URLSearchParams(window.location.search).get("ref");
+        if (refCode) {
+          const { data: rc } = await supabase.from("referral_codes" as any).select("user_id").eq("code", refCode).eq("is_active", true).maybeSingle();
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          if (rc && newUser && (rc as any).user_id !== newUser.id) {
+            await supabase.from("referrals" as any).insert({ referrer_id: (rc as any).user_id, referred_user_id: newUser.id, code: refCode });
+          }
+        }
+      } catch (e) { console.warn("referral capture failed", e); }
       toast({
         title: "Check your email",
         description: "We've sent you a confirmation link to complete your registration.",

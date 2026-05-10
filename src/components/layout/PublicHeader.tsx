@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { Camera, Menu, X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 
 export const PublicHeader = () => {
@@ -56,6 +57,7 @@ export const PublicHeader = () => {
           {/* Auth Buttons & Cart */}
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
+            <LanguageSwitcher />
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link to="/cart">
                 <ShoppingCart className="h-5 w-5" />
