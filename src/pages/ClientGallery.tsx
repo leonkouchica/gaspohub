@@ -6,9 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Check, ArrowLeft } from "lucide-react";
+import { Heart, Check, ArrowLeft, Download, Settings } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { DashboardSkeleton as PageSkeleton } from "@/components/PageSkeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 export default function ClientGallery() {
   const { id } = useParams();
@@ -17,6 +21,8 @@ export default function ClientGallery() {
   const [loading, setLoading] = useState(true);
   const [gallery, setGallery] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -24,12 +30,32 @@ export default function ClientGallery() {
     setGallery(g);
     const { data: imgs } = await supabase.from("gallery_images").select("*").eq("gallery_id", id).order("position");
     setImages(imgs || []);
+    const { data: s } = await supabase.from("gallery_settings" as any).select("*").eq("gallery_id", id).maybeSingle();
+    setSettings(s || { gallery_id: id, watermark_enabled: true, watermark_text: "", download_limit: 0, download_count: 0, allow_downloads: true });
     setLoading(false);
   };
   useEffect(() => { load(); }, [id]);
 
   const isClient = user?.id === gallery?.client_id;
   const isOwner = user?.id === gallery?.photographer_id;
+
+  const saveSettings = async () => {
+    const payload: any = { gallery_id: id, watermark_enabled: settings.watermark_enabled, watermark_text: settings.watermark_text, download_limit: settings.download_limit, allow_downloads: settings.allow_downloads };
+    const { error } = await supabase.from("gallery_settings" as any).upsert(payload, { onConflict: "gallery_id" });
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    toast({ title: "Settings saved" });
+    setSettingsOpen(false);
+  };
+
+  const downloadImage = async (img: any) => {
+    if (!settings?.allow_downloads) return toast({ title: "Downloads disabled", variant: "destructive" });
+    if (settings.download_limit > 0 && settings.download_count >= settings.download_limit) {
+      return toast({ title: "Download limit reached", variant: "destructive" });
+    }
+    await supabase.from("gallery_settings" as any).update({ download_count: (settings.download_count || 0) + 1 }).eq("gallery_id", id);
+    setSettings({ ...settings, download_count: (settings.download_count || 0) + 1 });
+    const a = document.createElement("a"); a.href = img.image_url; a.download = `image-${img.id}.jpg`; a.target = "_blank"; a.click();
+  };
 
   const toggle = async (imgId: string, field: "is_favorite" | "is_approved", value: boolean) => {
     if (!isClient) return;
@@ -71,6 +97,22 @@ export default function ClientGallery() {
             <div className="flex gap-2 items-center">
               <Badge>{gallery.status}</Badge>
               <Badge variant="secondary">{favCount} favorites</Badge>
+              {isOwner && (
+                <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                  <DialogTrigger asChild><Button size="sm" variant="outline"><Settings className="h-4 w-4 mr-1" />Proofing</Button></DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader><DialogTitle>Proofing settings</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between"><Label>Watermark images</Label><Switch checked={!!settings?.watermark_enabled} onCheckedChange={(v) => setSettings({ ...settings, watermark_enabled: v })} /></div>
+                      <div><Label>Watermark text</Label><Input value={settings?.watermark_text || ""} onChange={(e) => setSettings({ ...settings, watermark_text: e.target.value })} placeholder="© Studio Name" /></div>
+                      <div className="flex items-center justify-between"><Label>Allow downloads</Label><Switch checked={!!settings?.allow_downloads} onCheckedChange={(v) => setSettings({ ...settings, allow_downloads: v })} /></div>
+                      <div><Label>Download limit (0 = unlimited)</Label><Input type="number" min={0} value={settings?.download_limit ?? 0} onChange={(e) => setSettings({ ...settings, download_limit: Number(e.target.value) })} /></div>
+                      <p className="text-xs text-muted-foreground">Used: {settings?.download_count ?? 0}</p>
+                    </div>
+                    <DialogFooter><Button onClick={saveSettings}>Save</Button></DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               {isClient && gallery.status === "delivered" && (
                 <Button onClick={approveAll}><Check className="h-4 w-4 mr-2" />Approve gallery</Button>
               )}
@@ -83,6 +125,13 @@ export default function ClientGallery() {
               {images.map((img) => (
                 <div key={img.id} className="relative group border rounded-md overflow-hidden">
                   <img src={img.image_url} alt={img.caption || ""} loading="lazy" className="w-full aspect-square object-cover" />
+                  {settings?.watermark_enabled && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-white/60 text-xl font-bold rotate-[-30deg] select-none drop-shadow-lg">
+                        {settings.watermark_text || "PROOF"}
+                      </span>
+                    </div>
+                  )}
                   {isClient && (
                     <div className="absolute inset-x-0 bottom-0 flex justify-between p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition">
                       <Button size="sm" variant={img.is_favorite ? "default" : "secondary"} onClick={() => toggle(img.id, "is_favorite", !img.is_favorite)}>
@@ -91,6 +140,11 @@ export default function ClientGallery() {
                       <Button size="sm" variant={img.is_approved ? "default" : "secondary"} onClick={() => toggle(img.id, "is_approved", !img.is_approved)}>
                         <Check className="h-4 w-4" />
                       </Button>
+                      {settings?.allow_downloads && (
+                        <Button size="sm" variant="secondary" onClick={() => downloadImage(img)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   )}
                   {(img.is_favorite || img.is_approved) && (
