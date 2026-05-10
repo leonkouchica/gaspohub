@@ -45,12 +45,16 @@ import ClientGallery from "./pages/ClientGallery";
 import MicrositeEditor from "./pages/MicrositeEditor";
 import MicrositePublic from "./pages/MicrositePublic";
 import Contracts from "./pages/Contracts";
+import TwoFactor from "./pages/TwoFactor";
+import StudioTeam from "./pages/StudioTeam";
+import Referrals from "./pages/Referrals";
 import Install from "./pages/Install";
 import About from "./pages/About";
 import HelpCenter from "./pages/HelpCenter";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Contact from "./pages/Contact";
+import { I18nProvider } from "@/lib/i18n";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +85,7 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <CartProvider>
+          <I18nProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -143,6 +148,9 @@ const App = () => (
                 <Route path="galleries/:id" element={<ClientGallery />} />
                 <Route path="microsite" element={<MicrositeEditor />} />
                 <Route path="contracts" element={<Contracts />} />
+                <Route path="security" element={<TwoFactor />} />
+                <Route path="team" element={<StudioTeam />} />
+                <Route path="referrals" element={<Referrals />} />
               </Route>
               
               {/* Protected checkout */}
@@ -164,6 +172,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </I18nProvider>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>
