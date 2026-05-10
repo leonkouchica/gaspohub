@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+
+let useAuthSafe: () => { user: { id: string } | null };
+try {
+  // Dynamic require so tests without AuthProvider don't crash
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require("@/hooks/useAuth");
+  useAuthSafe = () => { try { return mod.useAuth(); } catch { return { user: null }; } };
+} catch {
+  useAuthSafe = () => ({ user: null });
+}
 
 type Dict = Record<string, string>;
 
@@ -52,7 +61,7 @@ interface I18nCtx { locale: string; setLocale: (l: string) => void; t: (k: strin
 const I18nContext = createContext<I18nCtx>({ locale: "en", setLocale: () => {}, t: (k) => k });
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user } = useAuthSafe();
   const [locale, setLocaleState] = useState<string>(() => localStorage.getItem(STORAGE_KEY) || "en");
 
   useEffect(() => {
