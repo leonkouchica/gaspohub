@@ -422,9 +422,17 @@ export default function Checkout() {
                   </div>
                 ))}
                 <Separator />
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>{taxRate ? `${taxRate.label} (${taxRate.rate_percent}%)` : "Tax"}</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${grandTotal.toFixed(2)}</span>
                 </div>
               </CardContent>
               <CardFooter>
@@ -439,7 +447,7 @@ export default function Checkout() {
                       Processing...
                     </>
                   ) : (
-                    `Pay $${totalPrice.toFixed(2)}`
+                    `Pay $${grandTotal.toFixed(2)}`
                   )}
                 </Button>
               </CardFooter>
