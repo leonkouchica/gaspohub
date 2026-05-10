@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { Camera, Menu, X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Badge } from "@/components/ui/badge";
 
 export const PublicHeader = () => {
