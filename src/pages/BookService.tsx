@@ -700,10 +700,31 @@ const BookService = () => {
                   {/* Price Summary */}
                   {selectedService && (
                     <div className="bg-muted/50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Service Total</span>
-                        <span className="text-xl font-bold text-primary">${selectedService.price}</span>
-                      </div>
+                      {taxRates.length > 0 && (
+                        <div className="mb-3">
+                          <Label className="text-sm">Tax region</Label>
+                          <Select value={selectedTaxRateId} onValueChange={setSelectedTaxRateId}>
+                            <SelectTrigger><SelectValue placeholder="No tax" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">No tax</SelectItem>
+                              {taxRates.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>{r.label} ({r.rate_percent}%)</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      {(() => {
+                        const tr = taxRates.find((r) => r.id === selectedTaxRateId);
+                        const { tax, total } = tr ? calcTax(selectedService.price, tr.rate_percent) : { tax: 0, total: selectedService.price };
+                        return (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>${selectedService.price.toFixed(2)}</span></div>
+                            {tr && <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Tax ({tr.rate_percent}%)</span><span>${tax.toFixed(2)}</span></div>}
+                            <div className="flex items-center justify-between pt-1 border-t"><span className="font-medium">Total</span><span className="text-xl font-bold text-primary">${total.toFixed(2)}</span></div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
