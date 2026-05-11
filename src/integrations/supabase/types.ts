@@ -276,6 +276,36 @@ export type Database = {
           },
         ]
       }
+      chargeback_webhook_events: {
+        Row: {
+          chargeback_id: string | null
+          created_at: string
+          event_type: string | null
+          gateway: string
+          id: string
+          payload: Json
+          processed: boolean
+        }
+        Insert: {
+          chargeback_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          gateway: string
+          id?: string
+          payload: Json
+          processed?: boolean
+        }
+        Update: {
+          chargeback_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          gateway?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+        }
+        Relationships: []
+      }
       chargebacks: {
         Row: {
           amount: number
@@ -635,6 +665,30 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      gallery_downloads: {
+        Row: {
+          created_at: string
+          gallery_id: string
+          id: string
+          image_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1628,6 +1682,42 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_credits: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          source_booking_id: string | null
+          source_referral_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          source_booking_id?: string | null
+          source_referral_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          source_booking_id?: string | null
+          source_referral_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           code: string
@@ -2105,6 +2195,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_studio_member_of: { Args: { _owner_id: string }; Returns: boolean }
+      record_gallery_download: {
+        Args: { _gallery_id: string; _image_id?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "client" | "photographer"
