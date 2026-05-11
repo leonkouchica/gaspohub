@@ -48,13 +48,21 @@ export default function ClientGallery() {
   };
 
   const downloadImage = async (img: any) => {
-    if (!settings?.allow_downloads) return toast({ title: "Downloads disabled", variant: "destructive" });
-    if (settings.download_limit > 0 && settings.download_count >= settings.download_limit) {
-      return toast({ title: "Download limit reached", variant: "destructive" });
+    const { data, error } = await supabase.rpc("record_gallery_download" as any, { _gallery_id: id, _image_id: img.id });
+    if (error) return toast({ title: "Download failed", description: error.message, variant: "destructive" });
+    const res = data as any;
+    if (!res?.ok) {
+      const map: Record<string, string> = {
+        forbidden: "You are not allowed to download this gallery",
+        downloads_disabled: "Downloads are disabled for this gallery",
+        limit_reached: "Download limit reached",
+        gallery_not_found: "Gallery not found",
+      };
+      return toast({ title: map[res?.error] || "Download blocked", variant: "destructive" });
     }
-    await supabase.from("gallery_settings" as any).update({ download_count: (settings.download_count || 0) + 1 }).eq("gallery_id", id);
     setSettings({ ...settings, download_count: (settings.download_count || 0) + 1 });
     const a = document.createElement("a"); a.href = img.image_url; a.download = `image-${img.id}.jpg`; a.target = "_blank"; a.click();
+    if (typeof res.remaining === "number") toast({ title: `Downloaded — ${res.remaining} left` });
   };
 
   const toggle = async (imgId: string, field: "is_favorite" | "is_approved", value: boolean) => {
