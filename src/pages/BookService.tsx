@@ -21,6 +21,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
+import { getActiveTaxRates, calcTax, type TaxRate } from "@/lib/tax";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   getSamplePhotographerByUserId,
   getSampleServicesByPhotographerId 
@@ -109,6 +111,10 @@ const BookService = () => {
   const [selectedGateway, setSelectedGateway] = useState<string>("");
   const [paymentResult, setPaymentResult] = useState<any>(null);
 
+  // Tax state
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+  const [selectedTaxRateId, setSelectedTaxRateId] = useState<string>("");
+
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
   });
@@ -118,6 +124,7 @@ const BookService = () => {
       fetchData();
     }
     fetchPaymentGateways();
+    getActiveTaxRates().then((rates) => setTaxRates(rates));
   }, [photographerId, serviceId]);
 
   const fetchPaymentGateways = async () => {
@@ -238,7 +245,12 @@ const BookService = () => {
     setPaymentResult(null);
 
     try {
-      // 1. Create the booking
+      // 1. Compute tax
+      const taxRate = taxRates.find((r) => r.id === selectedTaxRateId);
+      const subtotal = selectedService.price;
+      const { tax, total } = taxRate ? calcTax(subtotal, taxRate.rate_percent) : { tax: 0, total: subtotal };
+
+      // 2. Create the booking
       const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert({
@@ -247,7 +259,9 @@ const BookService = () => {
           service_id: selectedService.id,
           booking_date: data.booking_date.toISOString(),
           job_details: data.job_details,
-          total_amount: selectedService.price,
+          total_amount: total,
+          tax_amount: tax,
+          tax_rate_id: taxRate?.id ?? null,
           payment_status: selectedGateway ? 'processing' : 'pending',
         })
         .select()
@@ -263,7 +277,7 @@ const BookService = () => {
             {
               body: {
                 bookingId: bookingData.id,
-                amount: selectedService.price,
+                amount: total,
                 currency: 'USD',
                 gateway: selectedGateway,
                 customerEmail: user.email,
@@ -271,6 +285,8 @@ const BookService = () => {
                   service: selectedService.title,
                   photographer: `${photographer?.first_name} ${photographer?.last_name}`,
                   date: format(data.booking_date, "PPP"),
+                  tax_amount: tax,
+                  tax_rate: taxRate?.label,
                 }
               }
             }
