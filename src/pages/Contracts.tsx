@@ -102,6 +102,18 @@ export default function Contracts() {
     const { error } = await supabase.from("contracts" as any).update(patch).eq("id", signing.id);
     if (error) return toast.error(error.message);
     toast.success("Signed");
+    if (fullySigned) {
+      try {
+        const finalContract = { ...signing, ...patch } as Contract;
+        const url = await generateAndStoreContractPdf(finalContract);
+        if (url) {
+          await supabase.from("contracts" as any).update({ pdf_url: url }).eq("id", signing.id);
+          toast.success("Signed PDF archived");
+        }
+      } catch (e) {
+        console.error("Auto PDF archive failed", e);
+      }
+    }
     setSigning(null); setSignature("");
     load();
   };

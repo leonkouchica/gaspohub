@@ -21,6 +21,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
+import { getActiveTaxRates, calcTax, type TaxRate } from "@/lib/tax";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   getSamplePhotographerByUserId,
   getSampleServicesByPhotographerId 
@@ -109,6 +111,10 @@ const BookService = () => {
   const [selectedGateway, setSelectedGateway] = useState<string>("");
   const [paymentResult, setPaymentResult] = useState<any>(null);
 
+  // Tax state
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+  const [selectedTaxRateId, setSelectedTaxRateId] = useState<string>("");
+
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
   });
@@ -118,6 +124,7 @@ const BookService = () => {
       fetchData();
     }
     fetchPaymentGateways();
+    getActiveTaxRates().then((rates) => setTaxRates(rates));
   }, [photographerId, serviceId]);
 
   const fetchPaymentGateways = async () => {
@@ -238,7 +245,12 @@ const BookService = () => {
     setPaymentResult(null);
 
     try {
-      // 1. Create the booking
+      // 1. Compute tax
+      const taxRate = taxRates.find((r) => r.id === selectedTaxRateId);
+      const subtotal = selectedService.price;
+      const { tax, total } = taxRate ? calcTax(subtotal, taxRate.rate_percent) : { tax: 0, total: subtotal };
+
+      // 2. Create the booking
       const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert({
@@ -247,7 +259,9 @@ const BookService = () => {
           service_id: selectedService.id,
           booking_date: data.booking_date.toISOString(),
           job_details: data.job_details,
-          total_amount: selectedService.price,
+          total_amount: total,
+          tax_amount: tax,
+          tax_rate_id: taxRate?.id ?? null,
           payment_status: selectedGateway ? 'processing' : 'pending',
         })
         .select()
@@ -263,7 +277,7 @@ const BookService = () => {
             {
               body: {
                 bookingId: bookingData.id,
-                amount: selectedService.price,
+                amount: total,
                 currency: 'USD',
                 gateway: selectedGateway,
                 customerEmail: user.email,
@@ -271,6 +285,8 @@ const BookService = () => {
                   service: selectedService.title,
                   photographer: `${photographer?.first_name} ${photographer?.last_name}`,
                   date: format(data.booking_date, "PPP"),
+                  tax_amount: tax,
+                  tax_rate: taxRate?.label,
                 }
               }
             }
@@ -684,10 +700,31 @@ const BookService = () => {
                   {/* Price Summary */}
                   {selectedService && (
                     <div className="bg-muted/50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Service Total</span>
-                        <span className="text-xl font-bold text-primary">${selectedService.price}</span>
-                      </div>
+                      {taxRates.length > 0 && (
+                        <div className="mb-3">
+                          <Label className="text-sm">Tax region</Label>
+                          <Select value={selectedTaxRateId} onValueChange={setSelectedTaxRateId}>
+                            <SelectTrigger><SelectValue placeholder="No tax" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">No tax</SelectItem>
+                              {taxRates.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>{r.label} ({r.rate_percent}%)</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      {(() => {
+                        const tr = taxRates.find((r) => r.id === selectedTaxRateId);
+                        const { tax, total } = tr ? calcTax(selectedService.price, tr.rate_percent) : { tax: 0, total: selectedService.price };
+                        return (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>${selectedService.price.toFixed(2)}</span></div>
+                            {tr && <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Tax ({tr.rate_percent}%)</span><span>${tax.toFixed(2)}</span></div>}
+                            <div className="flex items-center justify-between pt-1 border-t"><span className="font-medium">Total</span><span className="text-xl font-bold text-primary">${total.toFixed(2)}</span></div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
